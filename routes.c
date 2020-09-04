@@ -14,20 +14,44 @@ int write_response(char *page, int status, struct MHD_Connection *connection) {
   return ret;
 }
 
-int handler1 (void *cls, struct MHD_Connection *connection,
+int list_read (void *cls, struct MHD_Connection *connection,
                           const char *url,
                           const char *method, const char *version,
                           const char *upload_data,
                           size_t *upload_data_size, void **con_cls) {
-  return write_response("handler 1", MHD_HTTP_OK, connection);
+  return write_response("List of books", MHD_HTTP_OK, connection);
 }
 
-int handler2 (void *cls, struct MHD_Connection *connection,
+int book_create (void *cls, struct MHD_Connection *connection,
                           const char *url,
                           const char *method, const char *version,
                           const char *upload_data,
                           size_t *upload_data_size, void **con_cls) {
-  return write_response("handler 2", MHD_HTTP_OK, connection);
+  return write_response("Create book", MHD_HTTP_OK, connection);
+}
+
+int book_read (void *cls, struct MHD_Connection *connection,
+                          const char *url,
+                          const char *method, const char *version,
+                          const char *upload_data,
+                          size_t *upload_data_size, void **con_cls) {
+  return write_response("Read book", MHD_HTTP_OK, connection);
+}
+
+int book_update (void *cls, struct MHD_Connection *connection,
+                          const char *url,
+                          const char *method, const char *version,
+                          const char *upload_data,
+                          size_t *upload_data_size, void **con_cls) {
+  return write_response("Update book", MHD_HTTP_OK, connection);
+}
+
+int book_delete (void *cls, struct MHD_Connection *connection,
+                          const char *url,
+                          const char *method, const char *version,
+                          const char *upload_data,
+                          size_t *upload_data_size, void **con_cls) {
+  return write_response("Delete book", MHD_HTTP_OK, connection);
 }
 
 int not_found_handler (void *cls, struct MHD_Connection *connection,
@@ -35,5 +59,5 @@ int not_found_handler (void *cls, struct MHD_Connection *connection,
                           const char *method, const char *version,
                           const char *upload_data,
                           size_t *upload_data_size, void **con_cls) {
-  return write_response("handler 3", MHD_HTTP_OK, connection);
+  return write_response("Route not found", MHD_HTTP_NOT_FOUND, connection);
 }

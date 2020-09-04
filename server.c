@@ -5,21 +5,36 @@
 
 MHD_AccessHandlerCallback router();
 
-handler_func handler1, handler2, not_found_handler;
+handler_func list_read, book_create, book_read, book_update, book_delete, not_found_handler;
 
 int main () {
   struct MHD_Daemon *daemon;
 
-  MHD_AccessHandlerCallback routes = router(3,
+  MHD_AccessHandlerCallback routes = router(6,
       (struct http_route){
         "GET",
-        ".*",
-        &handler1,
+        "^/list$",
+        &list_read,
       },
       (struct http_route){
         "POST",
-        ".*",
-        &handler2,
+        "^/book/[a-zA-Z0-9]*$",
+        &book_create,
+      },
+      (struct http_route){
+        "GET",
+        "^/book/[a-zA-Z0-9]*$",
+        &book_read,
+      },
+      (struct http_route){
+        "PATCH",
+        "^/book/[a-zA-Z0-9]*$",
+        &book_update,
+      },
+      (struct http_route){
+        "DELETE",
+        "^/book/[a-zA-Z0-9]*$",
+        &book_delete,
       },
       (struct http_route){
         "",

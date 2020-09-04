@@ -8,8 +8,6 @@
 
 #define BUFFER_SIZE 512
 
-handler_func handler1, handler2, not_found_handler;
-
 static struct http_route *global_routes;
 static struct http_route *global_routes;
 
@@ -21,6 +19,7 @@ bool route_matches(struct http_route route, const char *url, const char *method)
   if ((t=regcomp( &re, route.path_regex, REG_NOSUB )) != 0) {
     regerror(t, &re, buffer, sizeof buffer);
     fprintf(stderr,"Invalid route regex: %s (%s)\n", buffer, route.path_regex);
+
     exit(1);
   }
 
@@ -44,19 +43,14 @@ int route_to_handler (void *cls, struct MHD_Connection *connection,
 
   i = 0;
   while(global_routes[i].func != NULL) {
-    printf("arg %d: %s %s\n",
-      i,
-      global_routes[i].method,
-      global_routes[i].path_regex);
-    fflush(stdout);
-
     if (route_matches(global_routes[i], url, method)) {
-      printf("calling %d\n", i);
       return global_routes[i].func(cls, connection, url, method, version, upload_data, upload_data_size, con_cls);
     }
 
     i++;
   }
+
+  fprintf(stderr, "No route defined, disconnecting\n");
 
   return MHD_NO;
 }
@@ -77,7 +71,7 @@ MHD_AccessHandlerCallback router(int count, ...) {
   for (i = 0; i < count; i++) {
     global_routes[i]  = va_arg (args, struct http_route);    /* Get the next argument value. */
   }
-  global_routes[i+1] = (struct http_route){NULL, NULL, NULL};
+  global_routes[i] = (struct http_route){NULL, NULL, NULL};
 
   va_end (args);                  /* Clean up. */
 
