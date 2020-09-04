@@ -68,3 +68,26 @@ int list_read (void *cls, struct MHD_Connection *connection,
 
   return handled;
 }
+
+void add_book_to_shelf (struct book item) {
+	struct shelf *shelf_spot = &global_shelf;
+	struct shelf *new_item = malloc(sizeof(new_item));
+
+  new_item->current = item;
+  new_item->next = NULL;
+
+  // loop through our linked list, building up the response as we go
+  while (shelf_spot->current.isbn != NULL) {
+
+		if (shelf_spot->next == NULL) {
+      // last book on shelf
+      shelf_spot->next = new_item;
+      return;
+		}
+
+		shelf_spot = shelf_spot->next;
+	}
+
+  // first book on shelf
+  *shelf_spot = *new_item;
+}
