@@ -11,3 +11,13 @@ struct http_route {
   char *path_regex;
   handler_func *func;
 };
+
+struct book {
+  char *isbn;
+  char *title;
+};
+
+struct shelf {
+  struct book current;
+  struct shelf *next;
+};

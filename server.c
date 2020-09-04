@@ -1,4 +1,5 @@
 #include <stdio.h>
+
 #include "types.h"
 
 #define PORT 8080
@@ -18,22 +19,22 @@ int main () {
       },
       (struct http_route){
         "POST",
-        "^/book/[a-zA-Z0-9]*$",
+        "^/book/[0-9][0-9Xx-]*$", // not a valid regex for ISBN checking
         &book_create,
       },
       (struct http_route){
         "GET",
-        "^/book/[a-zA-Z0-9]*$",
+        "^/book/[0-9][0-9Xx-]*$", // not a valid regex for ISBN checking
         &book_read,
       },
       (struct http_route){
         "PATCH",
-        "^/book/[a-zA-Z0-9]*$",
+        "^/book/[0-9][0-9Xx-]*$", // not a valid regex for ISBN checking
         &book_update,
       },
       (struct http_route){
         "DELETE",
-        "^/book/[a-zA-Z0-9]*$",
+        "^/book/[0-9][0-9Xx-]*$", // not a valid regex for ISBN checking
         &book_delete,
       },
       (struct http_route){

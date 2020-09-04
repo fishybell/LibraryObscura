@@ -5,7 +5,7 @@ build:
 	docker build -t server .
 
 PROG = server
-SRC = router.c routes.c server.c
+SRC = book.c router.c server.c shelf.c
 
 all: $(PROG)
 

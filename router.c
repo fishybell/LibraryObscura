@@ -9,7 +9,6 @@
 #define BUFFER_SIZE 512
 
 static struct http_route *global_routes;
-static struct http_route *global_routes;
 
 bool route_matches(struct http_route route, const char *url, const char *method) {
   int t;
@@ -76,4 +75,26 @@ MHD_AccessHandlerCallback router(int count, ...) {
   va_end (args);                  /* Clean up. */
 
   return &route_to_handler;
+}
+
+int write_response(char *page, int status, struct MHD_Connection *connection, enum MHD_ResponseMemoryMode mode) {
+  struct MHD_Response *response;
+  int ret;
+
+  printf("Responding with %lu bytes\n", strlen(page));
+
+	response = MHD_create_response_from_buffer (strlen (page), (void*) page, mode);
+
+  ret = MHD_queue_response (connection, status, response);
+  MHD_destroy_response (response);
+
+  return ret;
+}
+
+int not_found_handler (void *cls, struct MHD_Connection *connection,
+                          const char *url,
+                          const char *method, const char *version,
+                          const char *upload_data,
+                          size_t *upload_data_size, void **con_cls) {
+  return write_response("Route not found", MHD_HTTP_NOT_FOUND, connection, MHD_RESPMEM_PERSISTENT);
 }
