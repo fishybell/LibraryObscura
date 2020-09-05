@@ -37,8 +37,7 @@ int not_found_handler (void *cls, struct MHD_Connection *connection,
 
 void
 request_completed (void *cls, struct MHD_Connection *connection,
-                   void **con_cls, enum MHD_RequestTerminationCode toe)
-{
+                   void **con_cls, enum MHD_RequestTerminationCode toe) {
   struct connection_context *context = *con_cls;
 
   if (context == NULL)

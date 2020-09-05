@@ -10,21 +10,14 @@
 
 int write_response(char *page, int status, struct MHD_Connection *connection, enum MHD_ResponseMemoryMode mode);
 
-struct connection_info_struct
-{
+struct connection_info_struct {
   int connectiontype;
   char *answerstring;
   struct MHD_PostProcessor *postprocessor;
 };
 
 // a global shelf that starts off empty
-// shame
 static struct shelf global_shelf = {(struct book){NULL, NULL}, NULL};
-//static const struct book book1 = {"1", "one"}, book2 = {"2", "two"}, book3 = {"3", "three"};
-//static struct shelf shelf3 = {book3, NULL};
-//static struct shelf shelf2 = {book2, &shelf3};
-//static struct shelf shelf1 = {book1, &shelf2};
-//static struct shelf global_shelf = {(struct book){"0", "zero"}, &shelf1};
 
 int list_read (void *cls, struct MHD_Connection *connection,
                           const char *url,

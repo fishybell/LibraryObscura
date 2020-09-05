@@ -9,7 +9,6 @@
 
 #define MIN(A, B)  ((A) < (B) ? (A) : (B))
 
-
 int write_response(char *page, int status, struct MHD_Connection *connection, enum MHD_ResponseMemoryMode mode);
 void add_book_to_shelf (struct book item);
 struct book *get_book_from_shelf(char *isbn);
