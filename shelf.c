@@ -109,32 +109,46 @@ struct book *get_book_from_shelf(char *isbn) {
 bool delete_book_from_shelf(char *isbn) {
 	struct shelf *shelf_spot = &global_shelf;
 	struct shelf *last_spot = NULL;
+	struct shelf *next = NULL;
+  struct book current;
+  bool top = true;
 
   // loop through our linked list until we find our book
   while (shelf_spot->current.isbn != NULL) {
+    current = shelf_spot->current;
+    next = shelf_spot->next;
 
-		if (strcmp(shelf_spot->current.isbn, isbn) == 0) {
+		if (strcmp(current.isbn, isbn) == 0) {
       // found it
       if (last_spot == NULL) {
-        // it was the only item on the shelf, clear the shelf
-        global_shelf = (struct shelf){(struct book){NULL, NULL}, NULL};
+        if (next == NULL) {
+          // it was the only item on the shelf, clear the shelf
+          global_shelf = (struct shelf){(struct book){NULL, NULL}, NULL};
+        } else {
+          // it was the first item on the shelf, reset our top spot
+          global_shelf.current = next->current;
+          global_shelf.next = next->next;
+        }
       } else {
         // it was a secondary item, remove the reference to it and patch the hole
-        last_spot->next = shelf_spot->next;
+        last_spot->next = next;
       }
 
-      free(shelf_spot->current.isbn);
-      free(shelf_spot->current.title);
-      free(shelf_spot);
+      free(current.isbn);
+      free(current.title);
+      if (!top) {
+        free(shelf_spot);
+      }
 
       return true;
-    } else if (shelf_spot->next == NULL) {
+    } else if (next == NULL) {
       // not on the shelf
       return false;
     }
 
+    top = false;
     last_spot = shelf_spot;
-		shelf_spot = shelf_spot->next;
+		shelf_spot = next;
 	}
 
   // nothing on the shelf

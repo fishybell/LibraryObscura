@@ -102,7 +102,7 @@ struct vm *new_standard_vm() {
   return v;
 }
 
-int main () {
+/*int main () {
 	printf("Should print like so\n");
 
   printf("-----------------\n");
@@ -160,4 +160,4 @@ int main () {
   printf("-----------------\n");
 
   return 0;
-}
+}*/
