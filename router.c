@@ -7,8 +7,54 @@
 #include "types.h"
 
 #define BUFFER_SIZE 512
+#define MAX_UPLOAD_SIZE 512
+#define GET             0
+#define POST            1
+#define POSTBUFFERSIZE  512
 
 static struct http_route *global_routes;
+
+struct connection_context
+{
+  char *buffer;
+  size_t buffer_size;
+  bool too_big;
+};
+
+int write_response(char *page, int status, struct MHD_Connection *connection, enum MHD_ResponseMemoryMode mode) {
+  struct MHD_Response *response;
+  int ret;
+
+  printf("Responding with %lu bytes\n", strlen(page));
+
+	response = MHD_create_response_from_buffer (strlen (page), (void*) page, mode);
+
+  ret = MHD_queue_response (connection, status, response);
+  MHD_destroy_response (response);
+
+  return ret;
+}
+
+int not_found_handler (void *cls, struct MHD_Connection *connection,
+                          const char *url,
+                          const char *method, const char *version,
+                          const char *upload_data,
+                          size_t *upload_data_size, void **con_cls) {
+  return write_response("Route not found", MHD_HTTP_NOT_FOUND, connection, MHD_RESPMEM_PERSISTENT);
+}
+
+void
+request_completed (void *cls, struct MHD_Connection *connection,
+                   void **con_cls, enum MHD_RequestTerminationCode toe)
+{
+  struct connection_context *context = *con_cls;
+
+  if (context == NULL)
+    return;
+
+  free (context);
+  *con_cls = NULL;
+}
 
 bool route_matches(struct http_route route, const char *url, const char *method) {
   int t;
@@ -35,15 +81,62 @@ int route_to_handler (void *cls, struct MHD_Connection *connection,
                           const char *method, const char *version,
                           const char *upload_data,
                           size_t *upload_data_size, void **con_cls) {
+
+  struct connection_context *context;
   int i;
+
+  // create a context object around this connection first (we'll get called again with the same object)
+  if (*con_cls == NULL) {
+
+    context = malloc (sizeof (struct connection_context));
+    if (context == NULL) {
+      return MHD_NO;
+    }
+
+    context->buffer = malloc(MAX_UPLOAD_SIZE);
+    if (context->buffer == NULL) {
+      return MHD_NO;
+    }
+    context->buffer_size = 0;
+    context->too_big = false;
+
+    *con_cls = (void *) context;
+
+    return MHD_YES;
+  }
+
+  context = *con_cls;
 
   printf("url: %s\n", url);
   printf("method: %s\n", method);
+  printf("bytes: %ld\n", context->buffer_size);
+
+  if (upload_data_size != NULL) {
+
+    if (*upload_data_size != 0) {
+
+      if (context->buffer_size + *upload_data_size < MAX_UPLOAD_SIZE) {
+        memcpy(context->buffer + context->buffer_size, upload_data, *upload_data_size);
+        context->buffer_size += *upload_data_size;
+      } else {
+        context->too_big = true;
+      }
+
+      *upload_data_size = 0;
+
+      return MHD_YES;
+    }
+
+  }
+
+  if (context->too_big) {
+    return write_response("Title too long\n", MHD_HTTP_BAD_REQUEST, connection, MHD_RESPMEM_PERSISTENT);
+  }
 
   i = 0;
   while(global_routes[i].func != NULL) {
     if (route_matches(global_routes[i], url, method)) {
-      return global_routes[i].func(cls, connection, url, method, version, upload_data, upload_data_size, con_cls);
+      return global_routes[i].func(cls, connection, url, method, version, context->buffer, &context->buffer_size, con_cls);
     }
 
     i++;
@@ -59,42 +152,21 @@ MHD_AccessHandlerCallback router(int count, ...) {
   // Unfortunately that enables an executable stack, which is discouraged
   // Instead we're breaking consistency by using a singleton object that's shared between 2 functions in this file.
   // Each time this function is called it overwrites the previous routing.
+  // Long story short, don't call this function twice.
 
   va_list args;
   int i, sum;
 
   global_routes=malloc(sizeof(handler_func) * (count)+1);
 
-  va_start (args, count);         /* Initialize the argument list. */
+  va_start (args, count);
 
   for (i = 0; i < count; i++) {
-    global_routes[i]  = va_arg (args, struct http_route);    /* Get the next argument value. */
+    global_routes[i]  = va_arg (args, struct http_route);
   }
   global_routes[i] = (struct http_route){NULL, NULL, NULL};
 
-  va_end (args);                  /* Clean up. */
+  va_end (args);
 
   return &route_to_handler;
-}
-
-int write_response(char *page, int status, struct MHD_Connection *connection, enum MHD_ResponseMemoryMode mode) {
-  struct MHD_Response *response;
-  int ret;
-
-  printf("Responding with %lu bytes\n", strlen(page));
-
-	response = MHD_create_response_from_buffer (strlen (page), (void*) page, mode);
-
-  ret = MHD_queue_response (connection, status, response);
-  MHD_destroy_response (response);
-
-  return ret;
-}
-
-int not_found_handler (void *cls, struct MHD_Connection *connection,
-                          const char *url,
-                          const char *method, const char *version,
-                          const char *upload_data,
-                          size_t *upload_data_size, void **con_cls) {
-  return write_response("Route not found", MHD_HTTP_NOT_FOUND, connection, MHD_RESPMEM_PERSISTENT);
 }
