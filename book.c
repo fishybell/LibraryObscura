@@ -3,7 +3,10 @@
 
 #include "types.h"
 
-#define URL_BUFFER_SIZE 256
+#define BUFFER_SIZE 256
+
+#define MIN(A, B)  ((A) < (B) ? (A) : (B))
+
 
 int write_response(char *page, int status, struct MHD_Connection *connection, enum MHD_ResponseMemoryMode mode);
 void add_book_to_shelf (struct book item);
@@ -14,11 +17,15 @@ int book_create (void *cls, struct MHD_Connection *connection,
                           const char *upload_data,
                           size_t *upload_data_size, void **con_cls) {
 
-  char *url_copy = malloc(sizeof(char) * URL_BUFFER_SIZE);
+  struct connection_context *context = *con_cls;
 
-  strncpy(url_copy, url+6, URL_BUFFER_SIZE); // +6 to strip off leading /book/
+  char *url_copy = malloc(sizeof(char) * BUFFER_SIZE);
+  char *body_copy = malloc(sizeof(char) * MIN(BUFFER_SIZE, context->buffer_size+1)); // allow for null terminator
 
-  add_book_to_shelf((struct book){url_copy, "added"});
+  strncpy(url_copy, url+6, BUFFER_SIZE); // +6 to strip off leading /book/
+  strncpy(body_copy, context->buffer, MIN(BUFFER_SIZE, context->buffer_size)); // +6 to strip off leading /book/
+
+  add_book_to_shelf((struct book){url_copy, body_copy});
   return write_response("Created book", MHD_HTTP_OK, connection, MHD_RESPMEM_PERSISTENT);
 }
 

@@ -2,7 +2,6 @@
 #include <string.h>
 #include <stdlib.h>
 #include <regex.h>
-#include <stdbool.h>
 
 #include "types.h"
 
@@ -13,13 +12,6 @@
 #define POSTBUFFERSIZE  512
 
 static struct http_route *global_routes;
-
-struct connection_context
-{
-  char *buffer;
-  size_t buffer_size;
-  bool too_big;
-};
 
 int write_response(char *page, int status, struct MHD_Connection *connection, enum MHD_ResponseMemoryMode mode) {
   struct MHD_Response *response;
@@ -52,6 +44,7 @@ request_completed (void *cls, struct MHD_Connection *connection,
   if (context == NULL)
     return;
 
+  free (context->buffer);
   free (context);
   *con_cls = NULL;
 }

@@ -1,3 +1,4 @@
+#include <stdbool.h>
 #include <microhttpd.h>
 
 typedef int (handler_func)(void *, struct MHD_Connection *,
@@ -20,4 +21,11 @@ struct book {
 struct shelf {
   struct book current;
   struct shelf *next;
+};
+
+struct connection_context
+{
+  char *buffer;
+  size_t buffer_size;
+  bool too_big;
 };
