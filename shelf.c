@@ -92,24 +92,23 @@ void add_book_to_shelf (struct book item) {
   *shelf_spot = *new_item;
 }
 
-struct book get_book_from_shelf(char *isbn) {
+struct book *get_book_from_shelf(char *isbn) {
 	struct shelf *shelf_spot = &global_shelf;
-  struct book not_found = {NULL, NULL};
 
   // loop through our linked list until we find our book
   while (shelf_spot->current.isbn != NULL) {
 
 		if (strcmp(shelf_spot->current.isbn, isbn) == 0) {
       // found it
-      return shelf_spot->current;
+      return &shelf_spot->current;
     } else if (shelf_spot->next == NULL) {
       // not on the shelf
-      return not_found;
+      return NULL;
     }
 
 		shelf_spot = shelf_spot->next;
 	}
 
   // nothing on the shelf
-  return not_found;
+  return NULL;
 }
