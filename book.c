@@ -13,6 +13,7 @@
 int write_response(char *page, int status, struct MHD_Connection *connection, enum MHD_ResponseMemoryMode mode);
 void add_book_to_shelf (struct book item);
 struct book *get_book_from_shelf(char *isbn);
+bool delete_book_from_shelf(char *isbn);
 
 int book_create (void *cls, struct MHD_Connection *connection,
                           const char *url,
@@ -85,5 +86,18 @@ int book_delete (void *cls, struct MHD_Connection *connection,
                           const char *method, const char *version,
                           const char *upload_data,
                           size_t *upload_data_size, void **con_cls) {
-  return write_response("Delete book\n", MHD_HTTP_OK, connection, MHD_RESPMEM_PERSISTENT);
+  struct connection_context *context = *con_cls;
+  char *buffer = malloc(sizeof(char) * BUFFER_SIZE);
+  bool found;
+  strncpy(buffer, url+6, BUFFER_SIZE); // +6 to strip off leading /book/
+
+  found = delete_book_from_shelf(buffer);
+
+  free(buffer);
+
+  if (!found) {
+    return write_response("Book not found\n", MHD_HTTP_NOT_FOUND, connection, MHD_RESPMEM_PERSISTENT);
+  }
+
+  return write_response("Book deleted\n", MHD_HTTP_OK, connection, MHD_RESPMEM_PERSISTENT);
 }

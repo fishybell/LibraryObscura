@@ -112,3 +112,38 @@ struct book *get_book_from_shelf(char *isbn) {
   // nothing on the shelf
   return NULL;
 }
+
+bool delete_book_from_shelf(char *isbn) {
+	struct shelf *shelf_spot = &global_shelf;
+	struct shelf *last_spot = NULL;
+
+  // loop through our linked list until we find our book
+  while (shelf_spot->current.isbn != NULL) {
+
+		if (strcmp(shelf_spot->current.isbn, isbn) == 0) {
+      // found it
+      if (last_spot == NULL) {
+        // it was the only item on the shelf, clear the shelf
+        global_shelf = (struct shelf){(struct book){NULL, NULL}, NULL};
+      } else {
+        // it was a secondary item, remove the reference to it and patch the hole
+        last_spot->next = shelf_spot->next;
+      }
+
+      free(shelf_spot->current.isbn);
+      free(shelf_spot->current.title);
+      free(shelf_spot);
+
+      return true;
+    } else if (shelf_spot->next == NULL) {
+      // not on the shelf
+      return false;
+    }
+
+    last_spot = shelf_spot;
+		shelf_spot = shelf_spot->next;
+	}
+
+  // nothing on the shelf
+  return false;
+}
