@@ -6,6 +6,8 @@
 #include "types.h"
 
 int parse_line(struct vm *v, char *line) {
+  printf("processing lines: %s\n", line);
+  fflush(stdout);
   int i = 0;
   char key = line[2];
   char key2 = line[4];
@@ -53,16 +55,20 @@ int parse_line(struct vm *v, char *line) {
       break;
 
     case 'm': // match two buffers
-      if (strncmp(v->buffers[0], v->buffers[1], strlen(v->buffers[0])) != 0) {
-        printf("didn't match buffers 0 and 1\n");
-        return -1 * (key3 - '0');
+      if (strncmp(v->buffers[key], v->buffers[key2], strlen(v->buffers[key])) != 0) {
+        i = key3 - '0';
+        printf("didn't match buffers 0 and 1, jumping %d\n", i);
+        fflush(stdout);
+        return i;
       }
-      printf("matched buffers 0 and 1\n");
+      printf("matched buffers 0 and 1, jumping default\n");
+      fflush(stdout);
       break;
 
     case 'o': // get a pointer to a register
       param = malloc(sizeof(int));
       *(int*)param = v->registers[key];
+      printf("what will be pointer %c? %d\n", key2, *(int*)param);
       v->pointers[key2] = param;
       break;
 
