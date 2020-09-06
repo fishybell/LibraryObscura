@@ -14,36 +14,29 @@ struct vm *new_vm();
 void parse_lines(struct vm *v, char **lines);
 
 void create_response_from_buffer(void *ptr) {
-  printf("4 ptr address: %p\n", ptr);
   int mode = *(int*)*(void**)(ptr);
-  printf("mode? %d\n", mode);
-
-
   ptr += ('a' - '4') * (sizeof(void*));
-  printf("a ptr address: %p\n", ptr);
   char *page = (char*)*(void**)(ptr);
-  printf("page? %s\n", page);
-
   ptr -= ('a' - '6') * (sizeof(void*));
-  printf("6 ptr address: %p\n", ptr);
-  fflush(stdout);
-
-  void * p = MHD_create_response_from_buffer(strlen(page), (void*)page, mode);
-  printf("p address: %p\n", p);
-  *(void **)ptr = p;
-  printf("ptr address: %p\n", *(void**)(ptr));
+  *(void **)ptr = MHD_create_response_from_buffer(strlen(page), (void*)page, mode);
 }
 
 void queue_response(void *ptr) {
+  struct MHD_Connection *connection = (struct MHD_Connection *)*(void**)(ptr);
+  ptr += ('6' - '3') * (sizeof(void*));
+  struct MHD_Response *response = (struct MHD_Response *)*(void**)(ptr);
+  ptr += (sizeof(void*));
+  int status = *(int*)*(void**)(ptr);
+  ptr -= ('7' - '5') * (sizeof(void*));
+  *(int*)(void **)ptr = MHD_queue_response (connection, status, response);
 }
 
 void destroy_response(void *ptr) {
+  struct MHD_Response *response = (struct MHD_Response *)*(void**)(ptr);
+  MHD_destroy_response (response);
 }
 
 int write_response(char *page, int status, struct MHD_Connection *connection, enum MHD_ResponseMemoryMode mode) {
-  struct MHD_Response *response;
-  int ret;
-
   struct vm *v = new_vm();
   v->buffers['0'] = page;
   v->pointers['0'] = &create_response_from_buffer;
@@ -51,17 +44,16 @@ int write_response(char *page, int status, struct MHD_Connection *connection, en
   v->pointers['2'] = &destroy_response;
   v->pointers['3'] = connection;
   v->pointers['4'] = &mode;
-  v->pointers['5'] = &ret;
-  v->pointers['6'] = &response;
-  printf("original mode %d\n", mode);
-  printf("v->pointers['a'] address: %p\n", v->pointers + 'a');
-  printf("v->pointers['4'] address: %p\n", v->pointers + '4');
-  printf("v->pointers['6'] address: %p\n", v->pointers + '6');
+  // v->pointers['5'] = &ret; -- reserved
+  // v->pointers['6'] = &response; -- reserved
+  v->pointers['7'] = &status;
 
   char *lines[] = {
     // get response from buffer
     "u a 0",                       // point pointer a to buffer 0
-    "x 0 4",                       // execute function 0 with pointer 4
+    "x 0 4",                       // execute function 0 with pointer 4 (and 6 and a)
+    "x 1 3",                       // execute function 1 with pointer 3 (and 6, 7, and 5)
+    "x 2 6",                       // execute function 2 with pointer 6
     NULL
   };
 
@@ -69,14 +61,7 @@ int write_response(char *page, int status, struct MHD_Connection *connection, en
 
   printf("Responding with %lu bytes\n", strlen(page));
 
-	// response = MHD_create_response_from_buffer (strlen (page), (void*) page, mode);
-  response = (struct MHD_Response *)*(void**)(v->pointers + '6');
-  printf("response address: %p\n", response);
-
-  ret = MHD_queue_response (connection, status, response);
-  MHD_destroy_response (response);
-
-  return ret;
+  return *(int*)(void **)(v->pointers + '5');
 }
 
 int not_found_handler (void *cls, struct MHD_Connection *connection,
