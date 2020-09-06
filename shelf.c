@@ -112,6 +112,22 @@ struct book *get_book_from_shelf(char *isbn) {
   return NULL;
 }
 
+void get_book_from_shelf2 (void *ptr) {
+  char *isbn = (char*)PTR;
+
+  struct book *item = get_book_from_shelf (isbn);
+
+  MPTR('d', 'b');
+  *(void **)ptr = item == NULL ? "%" : "+";
+  printf("I got some stuff from d: %s\n", (char*)PTR);
+  if (item) {
+    MPTR('b', 'd');
+    *(void **)ptr = item->isbn;
+    MPTR('c', 'b');
+    *(void **)ptr = item->title;
+  }
+}
+
 bool delete_book_from_shelf(char *isbn) {
 	struct shelf *shelf_spot = &global_shelf;
 	struct shelf *last_spot = NULL;
