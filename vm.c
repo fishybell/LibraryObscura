@@ -6,7 +6,7 @@
 #include "types.h"
 
 int parse_line(struct vm *v, char *line) {
-  printf("processing lines: %s\n", line);
+  printf("processing line: %s\n", line);
   fflush(stdout);
   int i = 0;
   char key = line[2];
@@ -15,31 +15,23 @@ int parse_line(struct vm *v, char *line) {
   void_func func;
   void *param;
   switch (line[0]) {
-    case 'u': // point a pointer to a buffer
-      param = v->buffers[key2];
-      v->pointers[key] = param;
-      break;
-
-    case 'x': // exec a function at a pointer
-      func = v->pointers[key];
-      param = v->pointers + key2;
-      func(param);
-      break;
-
-    case 'r': // set a register
-      v->registers[key] = key2;
-      break;
-
-    case 'l': // start a loop
-      v->loops[key] = key2 - '0';
-      break;
-
     case 'a': // add a loop to a register
       v->registers[key] = v->registers[key2] + v->loops[key3];
       break;
 
-    case 'p': // print a register
-      printf("%c", v->registers[key]);
+    case 'b': // start a buffer
+      v->buffers[key] = malloc(BUFFER_SIZE);
+      while (i<BUFFER_SIZE && line[4+i] != 0) {
+        v->buffers[key][i] = line[4+i];
+        i++;
+      }
+
+      v->registers[key] = key2;
+      break;
+
+    case 'c': // print a buffer
+      printf("%s", v->buffers[key]);
+      fflush(stdout);
       break;
 
     case 'e': // end a loop (incrementing iterator)
@@ -52,6 +44,15 @@ int parse_line(struct vm *v, char *line) {
       if (--v->loops[key] > key2 - '0') {
         return -1 * (key3 - '0');
       }
+      break;
+
+    case 'i': // inline edit a buffer
+      i = v->loops[key2];
+      v->buffers[key][i] = v->registers[key3];
+      break;
+
+    case 'l': // start a loop
+      v->loops[key] = key2 - '0';
       break;
 
     case 'm': // match two buffers
@@ -67,18 +68,23 @@ int parse_line(struct vm *v, char *line) {
       v->pointers[key2] = param;
       break;
 
-    case 'b': // start a buffer
-      v->buffers[key] = malloc(BUFFER_SIZE);
-      while (i<BUFFER_SIZE && line[4+i] != 0) {
-        v->buffers[key][i] = line[4+i];
-        i++;
-      }
+    case 'p': // print a register
+      printf("%c", v->registers[key]);
+      break;
 
+    case 'r': // set a register
       v->registers[key] = key2;
       break;
 
-    case 'c': // print a buffer
-      printf("%s", v->buffers[key]);
+    case 'u': // point a pointer to a buffer
+      param = v->buffers[key2];
+      v->pointers[key] = param;
+      break;
+
+    case 'x': // exec a function at a pointer
+      func = v->pointers[key];
+      param = v->pointers + key2;
+      func(param);
       break;
   }
 

@@ -82,6 +82,15 @@ void add_book_to_shelf (struct book item) {
   *shelf_spot = *new_item;
 }
 
+void add_book_to_shelf2 (void *ptr) {
+  struct book item;
+  item.isbn = (char*)PTR;
+  MPTR('c', 'b');
+  item.title = (char*)PTR;
+
+  add_book_to_shelf(item);
+}
+
 struct book *get_book_from_shelf(char *isbn) {
 	struct shelf *shelf_spot = &global_shelf;
 

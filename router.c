@@ -62,6 +62,19 @@ int write_response(char *page, int status, struct MHD_Connection *connection, en
 
   return *(int*)(void **)(v->pointers + '5');
 }
+// char *page, int status, struct MHD_Connection *connection, enum MHD_ResponseMemoryMode mode
+void write_response2 (void *ptr) {
+  char *page = (char*)PTR;
+  MPTR('7', 'a');
+  int status = *(int*)PTR;
+  MPTR('3', '7');
+  struct MHD_Connection *connection = (struct MHD_Connection *)PTR;
+  MPTR('4', '3');
+  int mode = *(int*)PTR;
+  MPTR('5', '4');
+
+  *(int*)(void **)ptr = write_response(page, status, connection, mode);
+}
 
 int not_found_handler (void *cls, struct MHD_Connection *connection,
                           const char *url,
