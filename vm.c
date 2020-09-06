@@ -20,9 +20,12 @@ int parse_line(struct vm *v, char *line) {
       param = v->buffers[key2];
       v->pointers[key] = param;
       break;
+
     case 'x': // exec a function at a pointer
       func = v->pointers[key];
-      param = v->pointers[key2];
+      printf("param key: %c\n", key);
+      param = v->pointers + key2;
+      printf("param address: %p\n", param);
       func(param);
       break;
 
