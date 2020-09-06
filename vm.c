@@ -57,18 +57,13 @@ int parse_line(struct vm *v, char *line) {
     case 'm': // match two buffers
       if (strncmp(v->buffers[key], v->buffers[key2], strlen(v->buffers[key])) != 0) {
         i = key3 - '0';
-        printf("didn't match buffers 0 and 1, jumping %d\n", i);
-        fflush(stdout);
         return i;
       }
-      printf("matched buffers 0 and 1, jumping default\n");
-      fflush(stdout);
       break;
 
     case 'o': // get a pointer to a register
       param = malloc(sizeof(int));
       *(int*)param = v->registers[key];
-      printf("what will be pointer %c? %d\n", key2, *(int*)param);
       v->pointers[key2] = param;
       break;
 

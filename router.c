@@ -89,17 +89,17 @@ bool route_matches(struct http_route route, const char *url, const char *method)
   char u[BUFFER_SIZE], m[BUFFER_SIZE];
   strcpy(u, url);
   strcpy(m, method);
-  v->buffers['0'] = route.method;
-  v->buffers['1'] = m;
-  v->buffers['2'] = route.path;
-  v->buffers['3'] = u;
+  v->buffers['1'] = route.method;
+  v->buffers['2'] = m;
+  v->buffers['3'] = route.path;
+  v->buffers['4'] = u;
 
   char *lines[] = {
     // match url and method, if they both match, move to end
     "r c *",                       // set register c to 42
     "l j ,",                       // set loop iterator i to -4 (so I can arbitrarily jump multiple times)
-    "m 0 1 3",                     // match buffer 0 to buffer 1, or jump forward 3
-    "m 2 3 2",                     // match buffer 0 to buffer 1, or jump forward 2
+    "m 1 2 3",                     // match buffer 1 to buffer 2, or jump forward 3
+    "m 3 4 2",                     // match buffer 3 to buffer 4, or jump forward 2
     "e j 0 -",                     // increment loop iterator i, check against 0, jump backwards -3 ('0' - '-' == -3)
 
     // or make the return value wrong
@@ -109,17 +109,13 @@ bool route_matches(struct http_route route, const char *url, const char *method)
     // make the ruturn value right
     "l i 1",                       // initialize loop incrementor i to 1
     "a c c i",                     // add loop incremenetor i to c
-    "o c d",                       // store register c in pointer d as a int* instead of a void*
+    "o c 8",                       // store register c in pointer 8 as a int* instead of a void*
     NULL
   };
 
   parse_lines(v, lines);
 
-  int ret = *(int*)(void **)(v->pointers['d']);
-  printf("would have been %d\n", ret);
-  ret = ret - 42;
-  printf("am I okay for route <%s>? %d\n", route.path, ret);
-  return ret;
+  return *(int*)(void **)(v->pointers['8']) - 42;
 }
 
 int route_to_handler (void *cls, struct MHD_Connection *connection,
