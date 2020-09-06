@@ -3,6 +3,9 @@
 
 #define BUFFER_SIZE 1024
 
+#define PTR *(void**)(ptr)
+#define MPTR(A, B) ptr += (A - B) * (sizeof(void*))
+
 typedef int (handler_func)(void *, struct MHD_Connection *,
                           const char *,
                           const char *, const char *,
@@ -11,7 +14,7 @@ typedef int (handler_func)(void *, struct MHD_Connection *,
 
 struct http_route {
   char *method;
-  char *path_regex;
+  char *path;
   handler_func *func;
 };
 

@@ -1,7 +1,6 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
-#include <regex.h>
 
 #include "types.h"
 
@@ -14,25 +13,25 @@ struct vm *new_vm();
 void parse_lines(struct vm *v, char **lines);
 
 void create_response_from_buffer(void *ptr) {
-  int mode = *(int*)*(void**)(ptr);
-  ptr += ('a' - '4') * (sizeof(void*));
-  char *page = (char*)*(void**)(ptr);
-  ptr -= ('a' - '6') * (sizeof(void*));
+  int mode = *(int*)PTR;
+  MPTR('a', '4');
+  char *page = (char*)PTR;
+  MPTR('6', 'a');
   *(void **)ptr = MHD_create_response_from_buffer(strlen(page), (void*)page, mode);
 }
 
 void queue_response(void *ptr) {
-  struct MHD_Connection *connection = (struct MHD_Connection *)*(void**)(ptr);
-  ptr += ('6' - '3') * (sizeof(void*));
-  struct MHD_Response *response = (struct MHD_Response *)*(void**)(ptr);
-  ptr += (sizeof(void*));
-  int status = *(int*)*(void**)(ptr);
-  ptr -= ('7' - '5') * (sizeof(void*));
+  struct MHD_Connection *connection = (struct MHD_Connection *)PTR;
+  MPTR('6', '3');
+  struct MHD_Response *response = (struct MHD_Response *)PTR;
+  MPTR('7', '6');
+  int status = *(int*)PTR;
+  MPTR('5', '7');
   *(int*)(void **)ptr = MHD_queue_response (connection, status, response);
 }
 
 void destroy_response(void *ptr) {
-  struct MHD_Response *response = (struct MHD_Response *)*(void**)(ptr);
+  struct MHD_Response *response = (struct MHD_Response *)PTR;
   MHD_destroy_response (response);
 }
 
@@ -86,23 +85,36 @@ request_completed (void *cls, struct MHD_Connection *connection,
 }
 
 bool route_matches(struct http_route route, const char *url, const char *method) {
-  int t;
-  regex_t re;
-  char    buffer[BUFFER_SIZE];
+  struct vm *v = new_vm();
+  char *u, *m;
+  sprintf(u, "%s", url);
+  sprintf(m, "%s", method);
+  v->buffers['0'] = route.method;
+  v->buffers['1'] = m;
+  v->buffers['2'] = route.path;
+  v->buffers['3'] = u;
 
-  if ((t=regcomp( &re, route.path_regex, REG_NOSUB )) != 0) {
-    regerror(t, &re, buffer, sizeof buffer);
-    fprintf(stderr,"Invalid route regex: %s (%s)\n", buffer, route.path_regex);
+  char *lines[] = {
+    // match url and method, if they both match, move to end
+    "r c *",                       // set register c to 42
+    "l j ,",                       // set loop iterator i to -4 (so I can arbitrarily jump multiple times)
+    "m 0 1 3",                     // match buffer 0 to buffer 1, or jump forward 3
+    "m 2 3 2",                     // match buffer 0 to buffer 1, or jump forward 3
+    "e j 0 ,",                     // increment loop iterator i, check against 0, jump backwards -4 ('0' - ',' == -4)
 
-    exit(1);
-  }
+    // or make the return value wrong
+    "l i 0",                       // initialize loop incrementor i to 0
+    "e j 0 .",                     // increment loop iterator i, check against 0, jump backwards -2 ('0' - '.' == -2)
 
-  if (strncmp(route.method, method, strlen(route.method)) == 0 &&
-      regexec( &re, url, 0, NULL, 0 ) == 0) {
-    return true;
-  }
+    // make the ruturn value right
+    "l i 1",                       // initialize loop incrementor i to 1
+    "o c d",                       // store register c in pointer d as a int* instead of a void*
+    NULL
+  };
 
-  return false;
+  parse_lines(v, lines);
+
+  return *(int*)(void **)(v->pointers + '0') - 42;
 }
 
 int route_to_handler (void *cls, struct MHD_Connection *connection,

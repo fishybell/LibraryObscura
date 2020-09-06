@@ -16,32 +16,32 @@ int main () {
   MHD_AccessHandlerCallback routes = router(6,
       (struct http_route){
         "GET",
-        "^/list$",
+        "/list",
         &list_read,
       },
       (struct http_route){
         "POST",
-        "^/book/[0-9][0-9Xx-]*$", // not a valid regex for ISBN checking
+        "/book/",
         &book_create,
       },
       (struct http_route){
         "GET",
-        "^/book/[0-9][0-9Xx-]*$", // not a valid regex for ISBN checking
+        "/book/",
         &book_read,
       },
       (struct http_route){
         "PATCH",
-        "^/book/[0-9][0-9Xx-]*$", // not a valid regex for ISBN checking
+        "/book/",
         &book_update,
       },
       (struct http_route){
         "DELETE",
-        "^/book/[0-9][0-9Xx-]*$", // not a valid regex for ISBN checking
+        "/book/",
         &book_delete,
       },
       (struct http_route){
         "",
-        ".*",
+        "",
         &not_found_handler,
       }
       );

@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stddef.h>
 #include <stdlib.h>
+#include <string.h>
 
 #include "types.h"
 
@@ -11,10 +12,6 @@ int parse_line(struct vm *v, char *line) {
   char key3 = line[6];
   void_func func;
   void *param;
-  //printf("line[0]: %c\n", line[0]);
-  //printf("key: %c\n", key);
-  //printf("key2: %c\n", key2);
-  //printf("key3: %c\n", key3);
   switch (line[0]) {
     case 'u': // point a pointer to a buffer
       param = v->buffers[key2];
@@ -53,6 +50,20 @@ int parse_line(struct vm *v, char *line) {
       if (--v->loops[key] > key2 - '0') {
         return -1 * (key3 - '0');
       }
+      break;
+
+    case 'm': // match two buffers
+      if (strncmp(v->buffers[0], v->buffers[1], strlen(v->buffers[0])) != 0) {
+        printf("didn't match buffers 0 and 1\n");
+        return -1 * (key3 - '0');
+      }
+      printf("matched buffers 0 and 1\n");
+      break;
+
+    case 'o': // get a pointer to a register
+      param = malloc(sizeof(int));
+      *(int*)param = v->registers[key];
+      v->pointers[key2] = param;
       break;
 
     case 'b': // start a buffer
