@@ -5,8 +5,6 @@
 
 #include "types.h"
 
-#define BUFFER_SIZE 256
-
 #define MIN(A, B)  ((A) < (B) ? (A) : (B))
 
 int write_response(char *page, int status, struct MHD_Connection *connection, enum MHD_ResponseMemoryMode mode);

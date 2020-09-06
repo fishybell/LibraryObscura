@@ -5,9 +5,6 @@
 
 #include "types.h"
 
-#define RESULT_BUFFER_SIZE 2048
-#define ITEM_BUFFER_SIZE 256
-
 int write_response(char *page, int status, struct MHD_Connection *connection, enum MHD_ResponseMemoryMode mode);
 
 struct connection_info_struct {
@@ -25,9 +22,9 @@ int list_read (void *cls, struct MHD_Connection *connection,
                           const char *upload_data,
                           size_t *upload_data_size, void **con_cls) {
 
-  char *result = malloc(sizeof(char) * (RESULT_BUFFER_SIZE + 20)); // enough extra for our "and many more" and a null termination
+  char *result = malloc(sizeof(char) * (BUFFER_SIZE + 20)); // enough extra for our "and many more" and a null termination
 	result[0] = 0;
-  char item[ITEM_BUFFER_SIZE];
+  char item[BUFFER_SIZE];
   int result_size, item_size, handled;
 	struct shelf local_shelf = global_shelf;
 
@@ -35,9 +32,9 @@ int list_read (void *cls, struct MHD_Connection *connection,
   result_size = 0;
   while (local_shelf.current.isbn != NULL) {
 
-    item_size = snprintf(item, ITEM_BUFFER_SIZE, "%s: %s\n", local_shelf.current.isbn, local_shelf.current.title);
+    item_size = snprintf(item, BUFFER_SIZE, "%s: %s\n", local_shelf.current.isbn, local_shelf.current.title);
 
-    if (result_size + item_size < RESULT_BUFFER_SIZE) {
+    if (result_size + item_size < BUFFER_SIZE) {
       strncat(result, item, item_size);
       result_size += item_size;
     } else {

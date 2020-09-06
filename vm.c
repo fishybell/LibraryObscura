@@ -2,16 +2,7 @@
 #include <stddef.h>
 #include <stdlib.h>
 
-#define BUFFER_SIZE 1024
-
-struct vm {
-  void *pointers[256];
-  int registers[256];
-  int loops[256];
-  char *buffers[256];
-};
-
-typedef void(*void_func)(void*);
+#include "types.h"
 
 int parse_line(struct vm *v, char *line) {
   int i = 0;
@@ -81,17 +72,23 @@ int parse_line(struct vm *v, char *line) {
   return 1; // default of one step forward
 }
 
-void some_func(void *ptr) {
-  for (int j=3; j>0; j--)
-    printf("%s%c", (char*)ptr, '3'+j);
-}
-
 void parse_lines(struct vm *v, char **lines) {
   int i = 0;
   while (lines[i] != NULL) {
     //printf("i: %d\n", i);
     i += parse_line(v, lines[i]);
   }
+}
+
+struct vm *new_vm() {
+  struct vm *v = malloc(sizeof(struct vm));
+
+  return v;
+}
+
+/*void some_func(void *ptr) {
+  for (int j=3; j>0; j--)
+    printf("%s%c", (char*)ptr, '3'+j);
 }
 
 struct vm *new_standard_vm() {
@@ -102,7 +99,7 @@ struct vm *new_standard_vm() {
   return v;
 }
 
-/*int main () {
+int main () {
 	printf("Should print like so\n");
 
   printf("-----------------\n");

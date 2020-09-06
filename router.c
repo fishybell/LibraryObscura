@@ -5,11 +5,8 @@
 
 #include "types.h"
 
-#define BUFFER_SIZE 512
-#define MAX_UPLOAD_SIZE 512
 #define GET             0
 #define POST            1
-#define POSTBUFFERSIZE  512
 
 static struct http_route *global_routes;
 
@@ -85,7 +82,7 @@ int route_to_handler (void *cls, struct MHD_Connection *connection,
       return MHD_NO;
     }
 
-    context->buffer = malloc(MAX_UPLOAD_SIZE);
+    context->buffer = malloc(BUFFER_SIZE);
     if (context->buffer == NULL) {
       return MHD_NO;
     }
@@ -107,7 +104,7 @@ int route_to_handler (void *cls, struct MHD_Connection *connection,
 
     if (*upload_data_size != 0) {
 
-      if (context->buffer_size + *upload_data_size < MAX_UPLOAD_SIZE) {
+      if (context->buffer_size + *upload_data_size < BUFFER_SIZE) {
         memcpy(context->buffer + context->buffer_size, upload_data, *upload_data_size);
         context->buffer_size += *upload_data_size;
       } else {

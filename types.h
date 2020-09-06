@@ -1,6 +1,8 @@
 #include <stdbool.h>
 #include <microhttpd.h>
 
+#define BUFFER_SIZE 1024
+
 typedef int (handler_func)(void *, struct MHD_Connection *,
                           const char *,
                           const char *, const char *,
@@ -29,3 +31,13 @@ struct connection_context
   size_t buffer_size;
   bool too_big;
 };
+
+struct vm {
+  void *pointers[256];
+  int registers[256];
+  int loops[256];
+  char *buffers[256];
+};
+
+typedef void(*void_func)(void*);
+
