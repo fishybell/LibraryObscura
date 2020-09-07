@@ -1,5 +1,5 @@
 # LibraryObscura
-[Obfuscated C](https://www.ioccc.org/) Web API to mimic a bacic library.
+[Obfuscated C](https://www.ioccc.org/) Web API to mimic a basic library.
 
 This is, apparently, what I write when given a basic challenge, but the point is "having fun with it."
 
