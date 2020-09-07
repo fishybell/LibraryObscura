@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 fail() {
-  #make stop > /dev/null
+  make stop > /dev/null
   echo "Unexpected output"
   echo -----------------------------------
   echo Tests failed

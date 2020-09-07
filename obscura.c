@@ -15,11 +15,7 @@ void get_book_from_shelf3(void *);
 struct vm *new_vm();
 void parse_lines(struct vm *v, char **lines);
 
-int book_create (void *cls, struct MHD_Connection *connection,
-                          const char *url,
-                          const char *method, const char *version,
-                          const char *upload_data,
-                          size_t *upload_data_size, void **con_cls) {
+int book_create HANDLER {
 
   struct connection_context *context = *con_cls;
   struct vm *v = new_vm();
@@ -68,11 +64,7 @@ int book_create (void *cls, struct MHD_Connection *connection,
   return *(int*)(void **)(v->pointers + '5');
 }
 
-int book_read (void *cls, struct MHD_Connection *connection,
-                          const char *url,
-                          const char *method, const char *version,
-                          const char *upload_data,
-                          size_t *upload_data_size, void **con_cls) {
+int book_read HANDLER {
 
   struct connection_context *context = *con_cls;
   struct vm *v = new_vm();
@@ -88,7 +80,6 @@ int book_read (void *cls, struct MHD_Connection *connection,
   v->pointers['B'] = &get_book_from_shelf2;
   // v->pointers['b'] = isbn; -- reserved
   // v->pointers['c'] = title; -- reserved
-  //v->loops['j'] = context->buffer_size+1;
 
   char *lines[] = {
     // call get_book_from_shelf with correct parameters
@@ -172,11 +163,7 @@ int book_read (void *cls, struct MHD_Connection *connection,
   return *(int*)(void **)(v->pointers + '5');
 }
 
-int book_update (void *cls, struct MHD_Connection *connection,
-                          const char *url,
-                          const char *method, const char *version,
-                          const char *upload_data,
-                          size_t *upload_data_size, void **con_cls) {
+int book_update HANDLER {
   struct connection_context *context = *con_cls;
   struct vm *v = new_vm();
   char *u, *b;
@@ -194,7 +181,6 @@ int book_update (void *cls, struct MHD_Connection *connection,
   v->pointers['C'] = &get_book_from_shelf3;
   // v->pointers['b'] = isbn; -- reserved
   // v->pointers['c'] = title; -- reserved
-  //v->loops['j'] = context->buffer_size+1;
 
   char *lines[] = {
     // call get_book_from_shelf with correct parameters
@@ -257,32 +243,23 @@ int book_update (void *cls, struct MHD_Connection *connection,
   return *(int*)(void **)(v->pointers + '5');
 }
 
-int book_delete (void *cls, struct MHD_Connection *connection,
-                          const char *url,
-                          const char *method, const char *version,
-                          const char *upload_data,
-                          size_t *upload_data_size, void **con_cls) {
+int book_delete HANDLER {
   struct connection_context *context = *con_cls;
   struct vm *v = new_vm();
-  char *u, *b;
+  char *u;
   u = malloc(BUFFER_SIZE);
-  b = malloc(BUFFER_SIZE);
   strncpy(u, url+6, BUFFER_SIZE); // +6 to strip off leading /book/
-  strcpy(b, context->buffer);
   // v->buffers['0'] = page; -- reserved
   v->buffers['5'] = u;
-  v->buffers['6'] = b;
   // v->buffers['7'] = character; -- reserved
   // v->buffers['8'] = return check; -- reserved
   v->pointers['3'] = connection;
   v->pointers['A'] = &write_response2;
   v->pointers['D'] = &delete_book_from_shelf2;
   // v->pointers['b'] = isbn; -- reserved
-  // v->pointers['c'] = title; -- reserved
-  //v->loops['j'] = context->buffer_size+1;
 
   char *lines[] = {
-    // call get_book_from_shelf with correct parameters
+    // call delete_book_from_shelf with correct parameters
     "u b 5",                       // pointers b is buffer 5
     "x D b",                       // execute function 9 with pointer b (and c)
     "b 0 Book not found\n",        // allocate buffer 0
@@ -336,19 +313,4 @@ int book_delete (void *cls, struct MHD_Connection *connection,
   parse_lines(v, lines);
 
   return *(int*)(void **)(v->pointers + '5');
-
-  //  struct connection_context *context = *con_cls;
-  //  char *buffer = malloc(sizeof(char) * BUFFER_SIZE);
-  //  bool found;
-  //  strncpy(buffer, url+6, BUFFER_SIZE); // +6 to strip off leading /book/
-
-  //  found = delete_book_from_shelf(buffer);
-
-  //  free(buffer);
-
-  //  if (!found) {
-  //    return write_response("Book not found\n", MHD_HTTP_NOT_FOUND, connection, MHD_RESPMEM_PERSISTENT);
-  //  }
-
-  //  return write_response("Book deleted\n", MHD_HTTP_OK, connection, MHD_RESPMEM_PERSISTENT);
 }

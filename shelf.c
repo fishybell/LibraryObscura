@@ -191,3 +191,12 @@ bool delete_book_from_shelf(char *isbn) {
   // nothing on the shelf
   return false;
 }
+
+void delete_book_from_shelf2 (void *ptr) {
+  char *isbn = (char*)PTR;
+
+  bool found = delete_book_from_shelf (isbn);
+
+  MPTR('d', 'b');
+  *(void **)ptr = !found ? "%" : "+";
+}

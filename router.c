@@ -76,11 +76,7 @@ void write_response2 (void *ptr) {
   *(int*)(void **)ptr = write_response(page, status, connection, mode);
 }
 
-int not_found_handler (void *cls, struct MHD_Connection *connection,
-                          const char *url,
-                          const char *method, const char *version,
-                          const char *upload_data,
-                          size_t *upload_data_size, void **con_cls) {
+int not_found_handler HANDLER {
   return write_response("Route not found", MHD_HTTP_NOT_FOUND, connection, MHD_RESPMEM_PERSISTENT);
 }
 
@@ -88,6 +84,7 @@ void
 request_completed (void *cls, struct MHD_Connection *connection,
                    void **con_cls, enum MHD_RequestTerminationCode toe) {
   struct connection_context *context = *con_cls;
+  printf("completed?");
 
   if (context == NULL)
     return;
@@ -131,11 +128,7 @@ bool route_matches(struct http_route route, const char *url, const char *method)
   return *(int*)(void **)(v->pointers['8']) - 42;
 }
 
-int route_to_handler (void *cls, struct MHD_Connection *connection,
-                          const char *url,
-                          const char *method, const char *version,
-                          const char *upload_data,
-                          size_t *upload_data_size, void **con_cls) {
+int route_to_handler HANDLER {
 
   struct connection_context *context;
   int i;
@@ -191,7 +184,11 @@ int route_to_handler (void *cls, struct MHD_Connection *connection,
   i = 0;
   while(global_routes[i].func != NULL) {
     if (route_matches(global_routes[i], url, method)) {
-      return global_routes[i].func(cls, connection, url, method, version, context->buffer, &context->buffer_size, con_cls);
+    printf("calling route %d\n", i);
+      int ret = global_routes[i].func(cls, connection, url, method, version, context->buffer, &context->buffer_size, con_cls);
+
+    printf("returning %d\n", ret);
+    return ret;
     }
 
     i++;
