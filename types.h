@@ -16,6 +16,7 @@ struct http_route {
   char *method;
   char *path;
   handler_func *func;
+  char *lines[BUFFER_SIZE]; 
 };
 
 struct book {

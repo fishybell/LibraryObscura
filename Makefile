@@ -11,7 +11,7 @@ build:
 	docker build -t server .
 
 PROG = server
-SRC = obscura.c router.c server.c shelf.c vm.c
+SRC = router.c server.c shelf.c vm.c
 
 all: $(PROG)
 

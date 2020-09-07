@@ -6,8 +6,7 @@
 #include "types.h"
 
 int parse_line(struct vm *v, char *line) {
-  printf("processing line: %s\n", line);
-  fflush(stdout);
+  // printf("processing line: %s\n", line);
   int i = 0, j = 0;
   char key = line[2];
   char key2 = line[4];
@@ -16,10 +15,10 @@ int parse_line(struct vm *v, char *line) {
   void *param;
   switch (line[0]) {
     case 'a': // add a loop to a register
-      printf("r %c was %d\n", key2, v->registers[key2]);
-      printf("l %c was %d\n", key3, v->loops[key3]);
+      // printf("r %c was %d\n", key2, v->registers[key2]);
+      // printf("l %c was %d\n", key3, v->loops[key3]);
       v->registers[key] = v->registers[key2] + v->loops[key3];
-      printf("%c is now %d\n", key, v->registers[key]);
+      // printf("%c is now %d\n", key, v->registers[key]);
       break;
 
     case 'b': // start a buffer
@@ -51,7 +50,7 @@ int parse_line(struct vm *v, char *line) {
     case 'g': // grow a buffer
       i = strlen(v->buffers[key]);
       j = 0;
-      printf("growing buffer %c (starting at %d) with %s\n", key, i, v->buffers[key2]);
+      // printf("growing buffer %c (starting at %d) with %s\n", key, i, v->buffers[key2]);
       while (i<BUFFER_SIZE && v->buffers[key2][j] != 0) {
         v->buffers[key][i] = v->buffers[key2][j];
         i++;
@@ -62,9 +61,9 @@ int parse_line(struct vm *v, char *line) {
 
     case 'i': // inline edit a buffer
       i = v->loops[key2];
-      printf("modifying %c (%s) at %d (%c) with %d\n", key, v->buffers[key], i, key2, v->registers[key3]);
+      // printf("modifying %c (%s) at %d (%c) with %d\n", key, v->buffers[key], i, key2, v->registers[key3]);
       v->buffers[key][i] = v->registers[key3];
-      printf("modified: %s\n", v->buffers[key]);
+      // printf("modified: %s\n", v->buffers[key]);
       break;
 
     case 'l': // start a loop
