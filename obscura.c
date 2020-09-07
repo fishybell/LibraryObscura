@@ -112,10 +112,10 @@ void ps(struct vm *v, char **L) {
 static struct K library = {(struct D){NULL, NULL}, NULL};
 void e (void *H) {
   char *N = malloc(S);
-	N[0] = 0;
+  N[0] = 0;
   char J[S];
   int O, G;
-	struct K Q = library;
+  struct K Q = library;
   O = 0;
   while (Q.A.F != NULL) {
     G = snprintf(J, S, "%s: %s\n", Q.A.F, Q.A.I);
@@ -127,11 +127,11 @@ void e (void *H) {
       O += 19;
       break;
     }
-		if (Q.B == NULL) {
+    if (Q.B == NULL) {
       break;
-		}
-		Q = *Q.B;
-	}
+    }
+    Q = *Q.B;
+  }
   if (O == 0) {
     sprintf(N, "This is an empty library\n");
   }
@@ -142,17 +142,17 @@ void o (void *H) {
   J.F = (char*)*(void**)(H);
   y('c', 'b');
   J.I = (char*)*(void**)(H);
-	struct K *w = &library;
-	struct K *O = malloc(sizeof(O));
+  struct K *w = &library;
+  struct K *O = malloc(sizeof(O));
   O->A = J;
   O->B = NULL;
   while (w->A.F != NULL) {
-		if (w->B == NULL) {
+    if (w->B == NULL) {
       w->B = O;
       return;
-		}
-		w = w->B;
-	}
+    }
+    w = w->B;
+  }
   *w = *O;
 }
 void g (void *H) {
@@ -160,9 +160,9 @@ void g (void *H) {
   y('d', 'b');
   *(void **)H = "%";
   struct D *J = NULL;
-	struct K *w = &library;
+  struct K *w = &library;
   while (w->A.F != NULL) {
-		if (strcmp(w->A.F, F) == 0) {
+    if (strcmp(w->A.F, F) == 0) {
       J = &w->A;
       *(void **)H = "+";
       y('b', 'd');
@@ -173,17 +173,17 @@ void g (void *H) {
     } else if (w->B == NULL) {
       break;
     }
-		w = w->B;
-	}
+    w = w->B;
+  }
 }
 void d (void *H) {
   char *F = (char*)*(void**)(H);
   y('d', 'b');
   *(void **)H = "%";
   struct D *J = NULL;
-	struct K *w = &library;
+  struct K *w = &library;
   while (w->A.F != NULL) {
-		if (strcmp(w->A.F, F) == 0) {
+    if (strcmp(w->A.F, F) == 0) {
       J = &w->A;
       *(void **)H = "+";
       y('b', 'd');
@@ -194,22 +194,22 @@ void d (void *H) {
     } else if (w->B == NULL) {
       break;
     }
-		w = w->B;
-	}
+    w = w->B;
+  }
 }
 void c (void *H) {
   char *F = (char*)*(void**)(H);
   y('d', 'b');
   *(void **)H = "%";
-	struct K *w = &library;
-	struct K *s = NULL;
-	struct K *B = NULL;
+  struct K *w = &library;
+  struct K *s = NULL;
+  struct K *B = NULL;
   struct D A;
   bool O = true;
   while (w->A.F != NULL) {
     A = w->A;
     B = w->B;
-		if (strcmp(A.F, F) == 0) {
+    if (strcmp(A.F, F) == 0) {
       if (s == NULL) {
         if (B == NULL) {
           library = (struct K){(struct D){NULL, NULL}, NULL};
@@ -232,8 +232,8 @@ void c (void *H) {
     }
     O = false;
     s = w;
-		w = B;
-	}
+    w = B;
+  }
 }
 void r(void *H) {
   int mode = *(int*)*(void**)(H);
