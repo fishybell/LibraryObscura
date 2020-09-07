@@ -23,8 +23,11 @@ echo -----------------------------------
 echo "List with empty shelves" && echo -n "  " && curl -s localhost:8080/list | grep -i empty || fail
 echo "Create book 126-3256" && echo -n "  " && curl -s -d title localhost:8080/book/126-3256 | grep -i created || fail
 echo "Should find book 126-3256" && echo -n "  " && curl -s localhost:8080/list | grep title || fail
+echo "Delete copy of book 126-3256" && echo -n "  " && curl -s -X DELETE localhost:8080/book/126-3256 | grep -i deleted || fail
+echo "Should not find book 126-3256" && echo -n "  " && curl -s localhost:8080/book/126-3256 | grep "not found" || fail
+echo "Recreate book 126-3256" && echo -n "  " && curl -s -d title localhost:8080/book/126-3256 | grep -i created || fail
 echo "Create another copy of book 126-3256" && echo -n "  " && curl -s -d title localhost:8080/book/126-3256 | grep -i created || fail
-echo "Delete on copy of book 126-3256" && echo -n "  " && curl -s -X DELETE localhost:8080/book/126-3256 | grep -i deleted || fail
+echo "Delete one copy of book 126-3256" && echo -n "  " && curl -s -X DELETE localhost:8080/book/126-3256 | grep -i deleted || fail
 echo "Should still find book 126-3256" && echo -n "  " && curl -s localhost:8080/list | grep title || fail
 echo "Change title on book 126-3256" && echo -n "  " && curl -s -d titler -X PATCH localhost:8080/book/126-3256 | grep -i updated || fail
 echo "Should see updates to book 126-3256" && echo -n "  " && curl -s localhost:8080/book/126-3256 | grep titler || fail
