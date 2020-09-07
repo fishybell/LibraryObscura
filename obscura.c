@@ -10,11 +10,11 @@
 #define MPTR(A, B) ptr += (A - B) * (sizeof(void*))
 #define HANDLER (void *cls, struct MHD_Connection *connection, \
                           const char *url, \
-                          const char *method, const char *version, \
+                          const char *M, const char *version, \
                           const char *upload_data, \
                           size_t *upload_data_size, void **con_cls)
-struct http_route {
-  char *method;
+struct h {
+  char *M;
   char *path;
   char *lines[BUFFER_SIZE]; 
 };
@@ -41,88 +41,70 @@ struct vm {
 typedef void(*void_func)(void*);
 int parse_line(struct vm *v, char *line) {
   int i = 0, j = 0;
-  char key = line[1];
-  char key2 = line[2];
-  char key3 = line[3];
-  void_func func;
-  void *param;
+  void *ptr;
   switch (line[0]) {
     case 'a':
-      v->registers[key] = v->registers[key2] + v->loops[key3];
+      v->registers[line[1]] = v->registers[line[2]] + v->loops[line[3]];
       break;
     case 'b':
-      v->buffers[key] = malloc(BUFFER_SIZE);
+      v->buffers[line[1]] = malloc(BUFFER_SIZE);
       while (i<BUFFER_SIZE && line[2+i] != 0) {
-        v->buffers[key][i] = line[2+i];
+        v->buffers[line[1]][i] = line[2+i];
         i++;
       }
-      v->buffers[key][i] = 0;
-      break;
-    case 'c':
-      printf("%s", v->buffers[key]);
-      fflush(stdout);
+      v->buffers[line[1]][i] = 0;
       break;
     case 'e':
-      if (++v->loops[key] < key2 - '0') {
-        return -1 * (key3 - '0');
-      }
-      break;
-    case 'f':
-      if (--v->loops[key] > key2 - '0') {
-        return -1 * (key3 - '0');
+      if (++v->loops[line[1]] < line[2] - '0') {
+        return -1 * (line[3] - '0');
       }
       break;
     case 'g':
-      i = strlen(v->buffers[key]);
+      i = strlen(v->buffers[line[1]]);
       j = 0;
-      while (i<BUFFER_SIZE && v->buffers[key2][j] != 0) {
-        v->buffers[key][i] = v->buffers[key2][j];
+      while (i<BUFFER_SIZE && v->buffers[line[2]][j] != 0) {
+        v->buffers[line[1]][i] = v->buffers[line[2]][j];
         i++;
         j++;
       }
-      v->buffers[key][i] = 0;
+      v->buffers[line[1]][i] = 0;
       break;
     case 'i':
-      i = v->loops[key2];
-      v->buffers[key][i] = v->registers[key3];
+      i = v->loops[line[2]];
+      v->buffers[line[1]][i] = v->registers[line[3]];
       break;
     case 'l':
-      v->loops[key] = key2 - '0';
+      v->loops[line[1]] = line[2] - '0';
       break;
     case 'm':
-      if (strncmp(v->buffers[key], v->buffers[key2], strlen(v->buffers[key])) != 0) {
-        i = key3 - '0';
+      if (strncmp(v->buffers[line[1]], v->buffers[line[2]], strlen(v->buffers[line[1]])) != 0) {
+        i = line[3] - '0';
         return i;
       }
       break;
     case 'o':
-      param = malloc(sizeof(int));
-      *(int*)param = v->registers[key];
-      v->pointers[key2] = param;
-      break;
-    case 'p':
-      printf("%c", v->registers[key]);
+      ptr = malloc(sizeof(int));
+      *(int*)ptr = v->registers[line[1]];
+      v->pointers[line[2]] = ptr;
       break;
     case 'r':
-      v->registers[key] = key2;
+      v->registers[line[1]] = line[2];
       break;
     case 's':
-      free(*(char**)v->pointers[key]);
-      param = v->buffers[key2];
-      *(char**)(v->pointers[key]) = param;
+      free(*(char**)v->pointers[line[1]]);
+      ptr = v->buffers[line[2]];
+      *(char**)(v->pointers[line[1]]) = ptr;
       break;
     case 't':
-      param = v->pointers[key2];
-      v->buffers[key] = (char*)param;
+      ptr = v->pointers[line[2]];
+      v->buffers[line[1]] = (char*)ptr;
       break;
     case 'u':
-      param = v->buffers[key2];
-      v->pointers[key] = param;
+      ptr = v->buffers[line[2]];
+      v->pointers[line[1]] = ptr;
       break;
     case 'x':
-      func = v->pointers[key];
-      param = v->pointers + key2;
-      func(param);
+      ((void_func)(v->pointers[line[1]]))(v->pointers + line[2]);
       break;
   }
   return 1;
@@ -299,7 +281,7 @@ int route_to_handler HANDLER {
   int i, ret;
   struct vm *v = malloc(sizeof(struct vm));
   char *u, *b, *m;
-  static struct http_route logic[] = { (struct http_route){"GET","/list",{"xAa","rcd","lib","acci","ej0.","ej0#","acci","oc7","lj1","azzj","oz4","x04","x13","x26",NULL},},(struct http_route){"POST","/book/",{"rc2","li&","acci","acci","acci","acci","azci","i6jz","ub5","uc6","x9b","b0Created book\n","ua0","rcd","lib","acci","acci","oc7","oz4","x04","x13","x26",NULL},},(struct http_route){"GET","/book/",{"ub5","xBb","b0Book not found\n","b7%","t8d","rc2","li&","acci","acci","acci","acci","azci","m78>","lj,","rcd","lib","acci","acci","acci","acci","acci","acci","li4","acci","oc7","ej0 ","lk0","i0kz","t8b","g08","b7:","g07","b7 ","g07","t8c","g08","b7\n","g07","rcd","lib","acci","ej0.","ej0#","acci","oc7","lj1","azzj","oz4","ua0","x04","x13","x26",NULL},},(struct http_route){"PATCH","/book/",{"ub5","xCb","b0Book not found\n","b7%","t8d","rc2","li&","acci","acci","acci","acci","azci","m78>","lj,","rcd","lib","acci","acci","acci","acci","acci","acci","li4","acci","oc7","ej0%","sb5","sc6","b0Book updated\n","rcd","lib","acci","acci","oc7","lj1","azzj","oz4","ua0","x04","x13","x26",NULL},},(struct http_route){"DELETE","/book/",{"ub5","xDb","b0Book not found\n","b7%","t8d","rc2","li&","acci","acci","acci","acci","azci","m78>","lj,","rcd","lib","acci","acci","acci","acci","acci","acci","li4","acci","oc7","ej0'","b0Book deleted\n","rcd","lib","acci","acci","oc7","lj1","azzj","oz4","ua0","x04","x13","x26",NULL},},(struct http_route){"","",{"rcd","lib","acci","acci","acci","acci","acci","acci","li4","acci","oc7","oz4","ua9","x04","x13","x26",NULL},},(struct http_route){"","",{"rc*","lj,","mAB3","mC52","ej0-","li0","ej0.","li1","acci","oc5",NULL}}};
+  static struct h logic[] = { (struct h){"GET","/list",{"xAa","rcd","lib","acci","ej0.","ej0#","acci","oc7","lj1","azzj","oz4","x04","x13","x26",NULL},},(struct h){"POST","/book/",{"rc2","li&","acci","acci","acci","acci","azci","i6jz","ub5","uc6","x9b","b0Created book\n","ua0","rcd","lib","acci","acci","oc7","oz4","x04","x13","x26",NULL},},(struct h){"GET","/book/",{"ub5","xBb","b0Book not found\n","b7%","t8d","rc2","li&","acci","acci","acci","acci","azci","m78>","lj,","rcd","lib","acci","acci","acci","acci","acci","acci","li4","acci","oc7","ej0 ","lk0","i0kz","t8b","g08","b7:","g07","b7 ","g07","t8c","g08","b7\n","g07","rcd","lib","acci","ej0.","ej0#","acci","oc7","lj1","azzj","oz4","ua0","x04","x13","x26",NULL},},(struct h){"PATCH","/book/",{"ub5","xCb","b0Book not found\n","b7%","t8d","rc2","li&","acci","acci","acci","acci","azci","m78>","lj,","rcd","lib","acci","acci","acci","acci","acci","acci","li4","acci","oc7","ej0%","sb5","sc6","b0Book updated\n","rcd","lib","acci","acci","oc7","lj1","azzj","oz4","ua0","x04","x13","x26",NULL},},(struct h){"DELETE","/book/",{"ub5","xDb","b0Book not found\n","b7%","t8d","rc2","li&","acci","acci","acci","acci","azci","m78>","lj,","rcd","lib","acci","acci","acci","acci","acci","acci","li4","acci","oc7","ej0'","b0Book deleted\n","rcd","lib","acci","acci","oc7","lj1","azzj","oz4","ua0","x04","x13","x26",NULL},},(struct h){"","",{"rcd","lib","acci","acci","acci","acci","acci","acci","li4","acci","oc7","oz4","ua9","x04","x13","x26",NULL},},(struct h){"","",{"rc*","lj,","mAB3","mC52","ej0-","li0","ej0.","li1","acci","oc5",NULL}}};
   if (*con_cls == NULL) {
     context = malloc (sizeof (struct connection_context));
     if (context == NULL) {
@@ -315,9 +297,6 @@ int route_to_handler HANDLER {
     return MHD_YES;
   }
   context = *con_cls;
-  printf("url: %s\n", url);
-  printf("method: %s\n", method);
-  printf("bytes: %ld\n", context->buffer_size);
   if (upload_data_size != NULL) {
     if (*upload_data_size != 0) {
       if (context->buffer_size + *upload_data_size < BUFFER_SIZE) {
@@ -337,7 +316,7 @@ int route_to_handler HANDLER {
   strncpy(u, url+6, BUFFER_SIZE);
   strcpy(b, context->buffer);
   strcpy(u, url);
-  strcpy(m, method);
+  strcpy(m, M);
   v->buffers['5'] = u;
   v->buffers['6'] = b;
   v->buffers['9'] = "Route not found\n";
@@ -360,7 +339,7 @@ int route_to_handler HANDLER {
     return ret;
   }
   for(;;i++) {
-    v->buffers['A'] = logic[i].method;
+    v->buffers['A'] = logic[i].M;
     v->buffers['C'] = logic[i].path;
     parse_lines(v, logic[6].lines);
     ret = *(int*)(void **)(v->pointers['5']);
@@ -369,7 +348,6 @@ int route_to_handler HANDLER {
       return *(int*)(void **)(v->pointers + '5');
     }
   }
-  fprintf(stderr, "No route defined, disconnecting\n");
   return MHD_NO;
 }
 int main () {
@@ -379,10 +357,8 @@ int main () {
                              MHD_OPTION_NOTIFY_COMPLETED, request_completed, NULL,
                              MHD_OPTION_END);
   if (NULL == daemon) return 1;
-	printf("Listening on port 8080\nPress ENTER to exit\n");
   fflush(stdout);
   getchar ();
   MHD_stop_daemon (daemon);
-	printf("Exiting\n");
   return 0;
 }
