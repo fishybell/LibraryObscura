@@ -127,6 +127,22 @@ void get_book_from_shelf2 (void *ptr) {
   }
 }
 
+// gets pointers to the book, not the book itself
+void get_book_from_shelf3 (void *ptr) {
+  char *isbn = (char*)PTR;
+
+  struct book *item = get_book_from_shelf (isbn);
+
+  MPTR('d', 'b');
+  *(void **)ptr = item == NULL ? "%" : "+";
+  if (item) {
+    MPTR('b', 'd');
+    *(void **)ptr = &item->isbn;
+    MPTR('c', 'b');
+    *(void **)ptr = &item->title;
+  }
+}
+
 bool delete_book_from_shelf(char *isbn) {
 	struct shelf *shelf_spot = &global_shelf;
 	struct shelf *last_spot = NULL;

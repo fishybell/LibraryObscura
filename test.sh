@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 fail() {
-  make stop > /dev/null
+  #make stop > /dev/null
   echo "Unexpected output"
   echo -----------------------------------
   echo Tests failed
@@ -26,7 +26,7 @@ echo "Should find book 126-3256" && echo -n "  " && curl -s localhost:8080/list 
 echo "Create another copy of book 126-3256" && echo -n "  " && curl -s -d title localhost:8080/book/126-3256 | grep -i created || fail
 echo "Delete on copy of book 126-3256" && echo -n "  " && curl -s -X DELETE localhost:8080/book/126-3256 | grep -i deleted || fail
 echo "Should still find book 126-3256" && echo -n "  " && curl -s localhost:8080/list | grep title || fail
-echo "Change tile on book 126-3256" && echo -n "  " && curl -s -d titler -X PATCH localhost:8080/book/126-3256 | grep -i updated || fail
+echo "Change title on book 126-3256" && echo -n "  " && curl -s -d titler -X PATCH localhost:8080/book/126-3256 | grep -i updated || fail
 echo "Should see updates to book 126-3256" && echo -n "  " && curl -s localhost:8080/book/126-3256 | grep titler || fail
 echo "Create book 126-3256-123" && echo -n "  " && curl -s -d title1 localhost:8080/book/126-3256-123 | grep -i created || fail
 echo "Create book 126-3256-124" && echo -n "  " && curl -s -d title2 localhost:8080/book/126-3256-124 | grep -i created || fail
