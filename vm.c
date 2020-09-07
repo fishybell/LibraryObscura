@@ -46,19 +46,13 @@ int parse_line(struct vm *v, char *line) {
       break;
 
     case 'g': // grow a buffer
-      printf("growing %c with %c\n", key, key2);
-      printf("%c %p\n", key, v->buffers[key]);
-      printf("%c %p\n", key2, v->buffers[key2]);
       i = strlen(v->buffers[key]);
-      printf("starting at %d\n", i);
       j = 0;
       while (i<BUFFER_SIZE && v->buffers[key2][j] != 0) {
-        printf(".");
         v->buffers[key][i] = v->buffers[key2][j];
         i++;
         j++;
       }
-      printf("!\n");
       v->buffers[key][i] = 0;
       break;
 
@@ -93,16 +87,13 @@ int parse_line(struct vm *v, char *line) {
       break;
 
     case 't': // point a buffer to a pointer
-      printf("before b[%c] (%p) -> p[%c] (%p)\n", key, v->buffers[key], key2, v->pointers[key2]);
       param = v->pointers[key2];
       v->buffers[key] = (char*)param;
-      printf("after b[%c] (%p) -> p[%c] (%p)\n", key, v->buffers[key],  key2, v->pointers[key2]);
       break;
 
     case 'u': // point a pointer to a buffer
       param = v->buffers[key2];
       v->pointers[key] = param;
-      printf("%c is now %s\n", key, (char*)param);
       break;
 
     case 'x': // exec a function at a pointer

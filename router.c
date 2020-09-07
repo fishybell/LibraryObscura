@@ -13,12 +13,9 @@ struct vm *new_vm();
 void parse_lines(struct vm *v, char **lines);
 
 void create_response_from_buffer(void *ptr) {
-  printf("got to create_response_from_buffer\n");
   int mode = *(int*)PTR;
-  printf("mode: %d\n", mode);
   MPTR('a', '4');
   char *page = (char*)PTR;
-  printf("page: %s\n", page);
   MPTR('6', 'a');
   *(void **)ptr = MHD_create_response_from_buffer(strlen(page), (void*)page, mode);
 }
@@ -67,18 +64,13 @@ int write_response(char *page, int status, struct MHD_Connection *connection, en
 }
 // char *page, int status, struct MHD_Connection *connection, enum MHD_ResponseMemoryMode mode
 void write_response2 (void *ptr) {
-  printf("got to write_response2\n");
   char *page = (char*)PTR;
-  printf("page: %s\n", page);
   MPTR('7', 'a');
   int status = *(int*)PTR;
-  printf("status: %d\n", status);
   MPTR('3', '7');
   struct MHD_Connection *connection = (struct MHD_Connection *)PTR;
-  printf("connection: %p\n", connection);
   MPTR('4', '3');
   int mode = *(int*)PTR;
-  printf("mode: %d\n", mode);
   MPTR('5', '4');
 
   *(int*)(void **)ptr = write_response(page, status, connection, mode);

@@ -138,7 +138,7 @@ int book_read (void *cls, struct MHD_Connection *connection,
 
     // jump and jump (will hit one of these two only)
     "e j 0 .",                     // increment loop iterator j, check against 0, jump backwards -2 ('0' - '.' == -2)
-    "e j 0 %",                     // increment loop iterator j, check against 0, jump backwards -11 ('0' - '%' == -11)
+    "e j 0 #",                     // increment loop iterator j, check against 0, jump backwards -13 ('0' - '#' == -13)
 
     "g 0 7",
 
@@ -158,10 +158,10 @@ int book_read (void *cls, struct MHD_Connection *connection,
     "o c 7",                       // store register c in pointer 7 as a int* instead of a void*
 
     // mode
-    //"l j 1",                       // set j to 1
-    //"a z z j",                     // add j to z (1)
+    "l j 1",                       // set j to 1
+    "a z z j",                     // add j to z (1) (free memory)
+    "o z 4",                       // store register z in pointer 4 as a int* instead of a void* (skip to here from above)
     "u a 0",                       // point pointer a to buffer 0
-    "o z 4",                       // store register z in pointer 4 as a int* instead of a void*
 
     // execute
     "x A a",                       // execute function A with pointer a (and 7, 3, 4)
@@ -171,20 +171,6 @@ int book_read (void *cls, struct MHD_Connection *connection,
   parse_lines(v, lines);
 
   return *(int*)(void **)(v->pointers + '5');
-
-  // char *buffer = malloc(sizeof(char) * BUFFER_SIZE);
-  // strncpy(buffer, url+6, BUFFER_SIZE); // +6 to strip off leading /book/
-
-  // struct book *item = get_book_from_shelf(buffer);
-
-  // if (item == NULL) {
-  //   return write_response("Book not found\n", MHD_HTTP_NOT_FOUND, connection, MHD_RESPMEM_PERSISTENT);
-  // }
-
-  // // re-use buffer
-  // sprintf(buffer, "%s: %s\n", item->isbn, item->title);
-
-  // return write_response(buffer, MHD_HTTP_OK, connection, MHD_RESPMEM_MUST_FREE);
 }
 
 int book_update (void *cls, struct MHD_Connection *connection,

@@ -119,7 +119,6 @@ void get_book_from_shelf2 (void *ptr) {
 
   MPTR('d', 'b');
   *(void **)ptr = item == NULL ? "%" : "+";
-  printf("I got some stuff from d: %s\n", (char*)PTR);
   if (item) {
     MPTR('b', 'd');
     *(void **)ptr = item->isbn;
