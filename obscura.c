@@ -1,18 +1,356 @@
 #include <stdio.h>
+#include <stdbool.h>
+#include <microhttpd.h>
 #include <string.h>
 #include <stdlib.h>
+#include <stddef.h>
 
-#include "types.h"
+#define BUFFER_SIZE 1024
+
+#define PTR *(void**)(ptr)
+#define MPTR(A, B) ptr += (A - B) * (sizeof(void*))
+
+typedef int (handler_func)(void *, struct MHD_Connection *,
+                          const char *,
+                          const char *, const char *,
+                          const char *,
+                          size_t *, void **);
+
+struct http_route {
+  char *method;
+  char *path;
+  char *lines[BUFFER_SIZE]; 
+};
+
+struct book {
+  char *isbn;
+  char *title;
+};
+
+struct shelf {
+  struct book current;
+  struct shelf *next;
+};
+
+struct connection_context
+{
+  char *buffer;
+  size_t buffer_size;
+  bool too_big;
+};
+
+struct vm {
+  void *pointers[256];
+  int registers[256];
+  int loops[256];
+  char *buffers[256];
+};
+
+typedef void(*void_func)(void*);
+
+#define HANDLER (void *cls, struct MHD_Connection *connection, \
+                          const char *url, \
+                          const char *method, const char *version, \
+                          const char *upload_data, \
+                          size_t *upload_data_size, void **con_cls)
 
 #define GET             0
 #define POST            1
 
-void parse_lines(struct vm *v, char **lines);
-void list_read2 (void *);
-void add_book_to_shelf2 (void *);
-bool delete_book_from_shelf2(void *);
-void get_book_from_shelf2(void *);
-void get_book_from_shelf3(void *);
+int parse_line(struct vm *v, char *line) {
+  int i = 0, j = 0;
+  char key = line[2];
+  char key2 = line[4];
+  char key3 = line[6];
+  void_func func;
+  void *param;
+  switch (line[0]) {
+    case 'a': // add a loop to a register
+      v->registers[key] = v->registers[key2] + v->loops[key3];
+      break;
+
+    case 'b': // start a buffer
+      v->buffers[key] = malloc(BUFFER_SIZE);
+      while (i<BUFFER_SIZE && line[4+i] != 0) {
+        v->buffers[key][i] = line[4+i];
+        i++;
+      }
+      v->buffers[key][i] = 0;
+      break;
+
+    case 'c': // print a buffer
+      printf("%s", v->buffers[key]);
+      fflush(stdout);
+      break;
+
+    case 'e': // end a loop (incrementing iterator)
+      if (++v->loops[key] < key2 - '0') {
+        return -1 * (key3 - '0');
+      }
+      break;
+
+    case 'f': // end a loop (decrementing iterator)
+      if (--v->loops[key] > key2 - '0') {
+        return -1 * (key3 - '0');
+      }
+      break;
+
+    case 'g': // grow a buffer
+      i = strlen(v->buffers[key]);
+      j = 0;
+      while (i<BUFFER_SIZE && v->buffers[key2][j] != 0) {
+        v->buffers[key][i] = v->buffers[key2][j];
+        i++;
+        j++;
+      }
+      v->buffers[key][i] = 0;
+      break;
+
+    case 'i': // inline edit a buffer
+      i = v->loops[key2];
+      v->buffers[key][i] = v->registers[key3];
+      break;
+
+    case 'l': // start a loop
+      v->loops[key] = key2 - '0';
+      break;
+
+    case 'm': // match two buffers
+      if (strncmp(v->buffers[key], v->buffers[key2], strlen(v->buffers[key])) != 0) {
+        i = key3 - '0';
+        return i;
+      }
+      break;
+
+    case 'o': // get a pointer to a register
+      param = malloc(sizeof(int));
+      *(int*)param = v->registers[key];
+      v->pointers[key2] = param;
+      break;
+
+    case 'p': // print a register
+      printf("%c", v->registers[key]);
+      break;
+
+    case 'r': // set a register
+      v->registers[key] = key2;
+      break;
+
+    case 's': // swap a pointer to a char* with a buffer
+      free(*(char**)v->pointers[key]);
+      param = v->buffers[key2];
+      *(char**)(v->pointers[key]) = param;
+      break;
+
+    case 't': // point a buffer to a pointer
+      param = v->pointers[key2];
+      v->buffers[key] = (char*)param;
+      break;
+
+    case 'u': // point a pointer to a buffer
+      param = v->buffers[key2];
+      v->pointers[key] = param;
+      break;
+
+    case 'x': // exec a function at a pointer
+      func = v->pointers[key];
+      param = v->pointers + key2;
+      func(param);
+      break;
+  }
+
+  return 1; // default of one step forward
+}
+
+void parse_lines(struct vm *v, char **lines) {
+  int i = 0;
+  while (lines[i] != NULL) {
+    i += parse_line(v, lines[i]);
+  }
+}
+
+struct connection_info_struct {
+  int connectiontype;
+  char *answerstring;
+  struct MHD_PostProcessor *postprocessor;
+};
+
+// a global shelf that starts off empty
+static struct shelf global_shelf = {(struct book){NULL, NULL}, NULL};
+
+void list_read2 (void *ptr) {
+  char *result = malloc(BUFFER_SIZE); // enough extra for our "and many more" and a null termination
+	result[0] = 0;
+  char item[BUFFER_SIZE];
+  int result_size, item_size, handled;
+	struct shelf local_shelf = global_shelf;
+
+  // loop through our linked list, building up the response as we go
+  result_size = 0;
+  while (local_shelf.current.isbn != NULL) {
+
+    item_size = snprintf(item, BUFFER_SIZE, "%s: %s\n", local_shelf.current.isbn, local_shelf.current.title);
+
+    if (result_size + item_size < BUFFER_SIZE - 20) {
+      strncat(result, item, item_size);
+      result_size += item_size;
+    } else {
+      strcat(result, "...and many more...\n"); // we left enough room for this
+      result_size += 19;
+      break;
+    }
+
+		if (local_shelf.next == NULL) {
+      break;
+		}
+
+		local_shelf = *local_shelf.next;
+	}
+
+  if (result_size == 0) {
+    sprintf(result, "This is an empty library\n");
+  }
+
+  *(void **)ptr = result;
+}
+
+void add_book_to_shelf2 (void *ptr) {
+  struct book item;
+  item.isbn = (char*)PTR;
+  MPTR('c', 'b');
+  item.title = (char*)PTR;
+
+	struct shelf *shelf_spot = &global_shelf;
+	struct shelf *new_item = malloc(sizeof(new_item));
+
+  new_item->current = item;
+  new_item->next = NULL;
+
+  // loop through our linked list until we find the last item
+  while (shelf_spot->current.isbn != NULL) {
+
+		if (shelf_spot->next == NULL) {
+      // last book on shelf
+      shelf_spot->next = new_item;
+      return;
+		}
+
+		shelf_spot = shelf_spot->next;
+	}
+
+  // first book on shelf
+  *shelf_spot = *new_item;
+}
+
+void get_book_from_shelf2 (void *ptr) {
+  char *isbn = (char*)PTR;
+  MPTR('d', 'b');
+  *(void **)ptr = "%";
+
+  struct book *item = NULL;
+	struct shelf *shelf_spot = &global_shelf;
+
+  // loop through our linked list until we find our book
+  while (shelf_spot->current.isbn != NULL) {
+
+		if (strcmp(shelf_spot->current.isbn, isbn) == 0) {
+      // found it
+      item = &shelf_spot->current;
+      *(void **)ptr = "+";
+      MPTR('b', 'd');
+      *(void **)ptr = item->isbn;
+      MPTR('c', 'b');
+      *(void **)ptr = item->title;
+      break;
+    } else if (shelf_spot->next == NULL) {
+      // not on the shelf
+      break;
+    }
+
+		shelf_spot = shelf_spot->next;
+	}
+}
+
+// gets pointers to the book, not the book itself
+void get_book_from_shelf3 (void *ptr) {
+  char *isbn = (char*)PTR;
+  MPTR('d', 'b');
+  *(void **)ptr = "%";
+
+  struct book *item = NULL;
+	struct shelf *shelf_spot = &global_shelf;
+
+  // loop through our linked list until we find our book
+  while (shelf_spot->current.isbn != NULL) {
+
+		if (strcmp(shelf_spot->current.isbn, isbn) == 0) {
+      // found it
+      item = &shelf_spot->current;
+      *(void **)ptr = "+";
+      MPTR('b', 'd');
+      *(void **)ptr = &item->isbn;
+      MPTR('c', 'b');
+      *(void **)ptr = &item->title;
+      break;
+    } else if (shelf_spot->next == NULL) {
+      // not on the shelf
+      break;
+    }
+
+		shelf_spot = shelf_spot->next;
+	}
+}
+
+void delete_book_from_shelf2 (void *ptr) {
+  char *isbn = (char*)PTR;
+  MPTR('d', 'b');
+  *(void **)ptr = "%";
+
+	struct shelf *shelf_spot = &global_shelf;
+	struct shelf *last_spot = NULL;
+	struct shelf *next = NULL;
+  struct book current;
+  bool top = true;
+
+  // loop through our linked list until we find our book
+  while (shelf_spot->current.isbn != NULL) {
+    current = shelf_spot->current;
+    next = shelf_spot->next;
+
+		if (strcmp(current.isbn, isbn) == 0) {
+      // found it
+      if (last_spot == NULL) {
+        if (next == NULL) {
+          // it was the only item on the shelf, clear the shelf
+          global_shelf = (struct shelf){(struct book){NULL, NULL}, NULL};
+        } else {
+          // it was the first item on the shelf, reset our top spot
+          global_shelf.current = next->current;
+          global_shelf.next = next->next;
+        }
+      } else {
+        // it was a secondary item, remove the reference to it and patch the hole
+        last_spot->next = next;
+      }
+
+      free(current.isbn);
+      free(current.title);
+      if (!top) {
+        free(shelf_spot);
+      }
+
+      *(void **)ptr = "+";
+      return;
+    } else if (next == NULL) {
+      // not on the shelf
+      return;
+    }
+
+    top = false;
+    last_spot = shelf_spot;
+		shelf_spot = next;
+	}
+}
 
 void create_response_from_buffer(void *ptr) {
   int mode = *(int*)PTR;
@@ -461,4 +799,29 @@ int route_to_handler HANDLER {
   fprintf(stderr, "No route defined, disconnecting\n");
 
   return MHD_NO;
+}
+#define PORT 8080
+
+int route_to_handler HANDLER;
+
+handler_func list_read, book_create, book_read, book_update, book_delete, not_found_handler;
+void request_completed (void *cls, struct MHD_Connection *connection,
+                   void **con_cls, enum MHD_RequestTerminationCode toe);
+
+int main () {
+  struct MHD_Daemon *daemon;
+
+  daemon = MHD_start_daemon (MHD_USE_INTERNAL_POLLING_THREAD, PORT, NULL, NULL,
+                             &route_to_handler, NULL,
+                             MHD_OPTION_NOTIFY_COMPLETED, request_completed, NULL,
+                             MHD_OPTION_END);
+  if (NULL == daemon) return 1;
+
+	printf("Listening on port 8080\nPress ENTER to exit\n");
+  fflush(stdout);
+  getchar ();
+
+  MHD_stop_daemon (daemon);
+	printf("Exiting\n");
+  return 0;
 }

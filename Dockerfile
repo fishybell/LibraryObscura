@@ -3,6 +3,6 @@ FROM alpine
 RUN apk add build-base libmicrohttpd libmicrohttpd-dev
 
 COPY Makefile .
-COPY router.c server.c shelf.c types.h vm.c ./
+COPY obscura.c ./
 RUN make all
-CMD ["./server"]
+CMD ["./library"]

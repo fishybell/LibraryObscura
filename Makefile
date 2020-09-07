@@ -1,22 +1,22 @@
 start: build
-	docker run -it -p 8080:8080 server
+	docker run -it -p 8080:8080 library
 
 background:
-	docker run -t -d -p 8080:8080 server
+	docker run -t -d -p 8080:8080 library
 
 stop:
-	docker kill `docker ps | grep server | cut -d' ' -f1`
+	docker kill `docker ps | grep library | cut -d' ' -f1`
 
 build:
-	docker build -t server .
+	docker build -t library .
 
-PROG = server
-SRC = router.c server.c shelf.c vm.c
+PROG = library
+SRC = obscura.c
 
 all: $(PROG)
 
 $(PROG): $(SRC)
-	$(CC) $(SRC) -o server -lmicrohttpd
+	$(CC) $(SRC) -o library -lmicrohttpd
 
 clean:
 	rm -f $(PROG)
