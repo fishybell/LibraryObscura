@@ -9,11 +9,14 @@ int write_response(char *page, int status, struct MHD_Connection *connection, en
 
 void add_book_to_shelf2 (void *);
 bool delete_book_from_shelf2(void *);
-void write_response2 (void *);
 void get_book_from_shelf2(void *);
 void get_book_from_shelf3(void *);
 struct vm *new_vm();
 void parse_lines(struct vm *v, char **lines);
+
+void create_response_from_buffer(void *ptr);
+void queue_response(void *ptr);
+void destroy_response(void *ptr);
 
 int book_create HANDLER {
 
@@ -27,9 +30,11 @@ int book_create HANDLER {
   // v->buffers['0'] = page; -- reserved
   v->buffers['5'] = u;
   v->buffers['6'] = b;
+  v->pointers['0'] = &create_response_from_buffer;
+  v->pointers['1'] = &queue_response;
+  v->pointers['2'] = &destroy_response;
   v->pointers['3'] = connection;
   v->pointers['9'] = &add_book_to_shelf2;
-  v->pointers['A'] = &write_response2;
   // v->pointers['b'] = isbn; -- reserved
   // v->pointers['c'] = title; -- reserved
   v->loops['j'] = context->buffer_size+1;
@@ -55,7 +60,9 @@ int book_create HANDLER {
     "a c c i",                       // add i to c (200)
     "o c 7",                         // store register c in pointer 7 as a int* instead of a void*
     "o z 4",                         // store register c in pointer 7 as a int* instead of a void*
-    "x A a",                         // execute function A with pointer a (and 7, 3, 4)
+    "x 0 4",                       // execute function 0 with pointer 4 (and 6 and a)
+    "x 1 3",                       // execute function 1 with pointer 3 (and 6, 7, and 5)
+    "x 2 6",                       // execute function 2 with pointer 6
     NULL
   };
 
@@ -75,8 +82,10 @@ int book_read HANDLER {
   v->buffers['5'] = u;
   // v->buffers['7'] = character; -- reserved
   // v->buffers['8'] = return check; -- reserved
+  v->pointers['0'] = &create_response_from_buffer;
+  v->pointers['1'] = &queue_response;
+  v->pointers['2'] = &destroy_response;
   v->pointers['3'] = connection;
-  v->pointers['A'] = &write_response2;
   v->pointers['B'] = &get_book_from_shelf2;
   // v->pointers['b'] = isbn; -- reserved
   // v->pointers['c'] = title; -- reserved
@@ -154,7 +163,9 @@ int book_read HANDLER {
     "u a 0",                       // point pointer a to buffer 0
 
     // execute
-    "x A a",                       // execute function A with pointer a (and 7, 3, 4)
+    "x 0 4",                       // execute function 0 with pointer 4 (and 6 and a)
+    "x 1 3",                       // execute function 1 with pointer 3 (and 6, 7, and 5)
+    "x 2 6",                       // execute function 2 with pointer 6
     NULL
   };
 
@@ -177,7 +188,9 @@ int book_update HANDLER {
   // v->buffers['7'] = character; -- reserved
   // v->buffers['8'] = return check; -- reserved
   v->pointers['3'] = connection;
-  v->pointers['A'] = &write_response2;
+  v->pointers['0'] = &create_response_from_buffer;
+  v->pointers['1'] = &queue_response;
+  v->pointers['2'] = &destroy_response;
   v->pointers['C'] = &get_book_from_shelf3;
   // v->pointers['b'] = isbn; -- reserved
   // v->pointers['c'] = title; -- reserved
@@ -235,7 +248,9 @@ int book_update HANDLER {
     "u a 0",                       // point pointer a to buffer 0
 
     // execute
-    "x A a",                       // execute function A with pointer a (and 7, 3, 4)
+    "x 0 4",                       // execute function 0 with pointer 4 (and 6 and a)
+    "x 1 3",                       // execute function 1 with pointer 3 (and 6, 7, and 5)
+    "x 2 6",                       // execute function 2 with pointer 6
     NULL
   };
   parse_lines(v, lines);
@@ -253,8 +268,10 @@ int book_delete HANDLER {
   v->buffers['5'] = u;
   // v->buffers['7'] = character; -- reserved
   // v->buffers['8'] = return check; -- reserved
+  v->pointers['0'] = &create_response_from_buffer;
+  v->pointers['1'] = &queue_response;
+  v->pointers['2'] = &destroy_response;
   v->pointers['3'] = connection;
-  v->pointers['A'] = &write_response2;
   v->pointers['D'] = &delete_book_from_shelf2;
   // v->pointers['b'] = isbn; -- reserved
 
@@ -307,7 +324,9 @@ int book_delete HANDLER {
     "u a 0",                       // point pointer a to buffer 0
 
     // execute
-    "x A a",                       // execute function A with pointer a (and 7, 3, 4)
+    "x 0 4",                       // execute function 0 with pointer 4 (and 6 and a)
+    "x 1 3",                       // execute function 1 with pointer 3 (and 6, 7, and 5)
+    "x 2 6",                       // execute function 2 with pointer 6
     NULL
   };
   parse_lines(v, lines);

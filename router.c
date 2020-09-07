@@ -7,32 +7,43 @@
 #define GET             0
 #define POST            1
 
-static struct http_route *global_routes;
-
+handler_func list_read, book_create, book_read, book_update, book_delete, not_found_handler;
 struct vm *new_vm();
 void parse_lines(struct vm *v, char **lines);
 
 void create_response_from_buffer(void *ptr) {
+printf("got to create_response_from_buffer\n");
   int mode = *(int*)PTR;
+printf("mode %d\n", mode);
   MPTR('a', '4');
   char *page = (char*)PTR;
+printf("page %s\n", page);
   MPTR('6', 'a');
   *(void **)ptr = MHD_create_response_from_buffer(strlen(page), (void*)page, mode);
+printf("finished create_response_from_buffer\n");
 }
 
 void queue_response(void *ptr) {
+printf("got to queue_response\n");
   struct MHD_Connection *connection = (struct MHD_Connection *)PTR;
+printf("connection %p\n", connection);
   MPTR('6', '3');
   struct MHD_Response *response = (struct MHD_Response *)PTR;
+printf("response %p\n", response);
   MPTR('7', '6');
   int status = *(int*)PTR;
+printf("status %d\n", status);
   MPTR('5', '7');
   *(int*)(void **)ptr = MHD_queue_response (connection, status, response);
+printf("finished queue_response\n");
 }
 
 void destroy_response(void *ptr) {
+printf("got to destroy_response\n");
   struct MHD_Response *response = (struct MHD_Response *)PTR;
+printf("response %p\n", response);
   MHD_destroy_response (response);
+printf("finished destroy_response\n");
 }
 
 int write_response(char *page, int status, struct MHD_Connection *connection, enum MHD_ResponseMemoryMode mode) {
@@ -61,19 +72,6 @@ int write_response(char *page, int status, struct MHD_Connection *connection, en
   printf("Responding with %lu bytes\n", strlen(page));
 
   return *(int*)(void **)(v->pointers + '5');
-}
-// char *page, int status, struct MHD_Connection *connection, enum MHD_ResponseMemoryMode mode
-void write_response2 (void *ptr) {
-  char *page = (char*)PTR;
-  MPTR('7', 'a');
-  int status = *(int*)PTR;
-  MPTR('3', '7');
-  struct MHD_Connection *connection = (struct MHD_Connection *)PTR;
-  MPTR('4', '3');
-  int mode = *(int*)PTR;
-  MPTR('5', '4');
-
-  *(int*)(void **)ptr = write_response(page, status, connection, mode);
 }
 
 int not_found_handler HANDLER {
@@ -133,6 +131,40 @@ int route_to_handler HANDLER {
   struct connection_context *context;
   int i;
 
+  static struct http_route routes[6] = {
+    (struct http_route){
+      "GET",
+      "/list",
+      &list_read,
+    },
+    (struct http_route){
+      "POST",
+      "/book/",
+      &book_create,
+    },
+    (struct http_route){
+      "GET",
+      "/book/",
+      &book_read,
+    },
+    (struct http_route){
+      "PATCH",
+      "/book/",
+      &book_update,
+    },
+    (struct http_route){
+      "DELETE",
+      "/book/",
+      &book_delete,
+    },
+    (struct http_route){
+      "",
+      "",
+      &not_found_handler,
+    }
+  };
+
+
   // create a context object around this connection first (we'll get called again with the same object)
   if (*con_cls == NULL) {
 
@@ -182,10 +214,10 @@ int route_to_handler HANDLER {
   }
 
   i = 0;
-  while(global_routes[i].func != NULL) {
-    if (route_matches(global_routes[i], url, method)) {
+  while(routes[i].func != NULL) {
+    if (route_matches(routes[i], url, method)) {
     printf("calling route %d\n", i);
-      int ret = global_routes[i].func(cls, connection, url, method, version, context->buffer, &context->buffer_size, con_cls);
+      int ret = routes[i].func(cls, connection, url, method, version, context->buffer, &context->buffer_size, con_cls);
 
     printf("returning %d\n", ret);
     return ret;
@@ -197,28 +229,4 @@ int route_to_handler HANDLER {
   fprintf(stderr, "No route defined, disconnecting\n");
 
   return MHD_NO;
-}
-
-MHD_AccessHandlerCallback router(int count, ...) {
-  // Closures don't really exist in C. The standard methodolgy is to use a nested callback function
-  // Unfortunately that enables an executable stack, which is discouraged
-  // Instead we're breaking consistency by using a singleton object that's shared between 2 functions in this file.
-  // Each time this function is called it overwrites the previous routing.
-  // Long story short, don't call this function twice.
-
-  va_list args;
-  int i, sum;
-
-  global_routes=malloc(sizeof(handler_func) * (count)+1);
-
-  va_start (args, count);
-
-  for (i = 0; i < count; i++) {
-    global_routes[i]  = va_arg (args, struct http_route);
-  }
-  global_routes[i] = (struct http_route){NULL, NULL, NULL};
-
-  va_end (args);
-
-  return &route_to_handler;
 }
